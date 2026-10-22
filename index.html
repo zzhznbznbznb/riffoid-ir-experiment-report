@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Riffoid IR Plugin Case A–D 阶段性实验总报告">
+<title>Riffoid IR Plugin 项目阶段性实验总报告</title>
+<style>
+:root{--ink:#202938;--muted:#5d6878;--line:#dce2ea;--paper:#fff;--wash:#f4f7fb;--accent:#2855a6}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--wash);color:var(--ink);font:16px/1.78 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.layout{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:275px minmax(0,1fr);gap:28px;padding:28px}
+nav{position:sticky;top:20px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px}
+nav .nav-title{font-weight:750;font-size:15px;margin-bottom:12px}nav a{display:block;color:var(--muted);font-size:13px;text-decoration:none;padding:4px 0;line-height:1.5}nav a:hover{color:var(--accent)}nav a.sub{padding-left:12px}
+main{min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:clamp(24px,4vw,58px);box-shadow:0 8px 30px #23334a0a}
+.hero{padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:28px}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.04em;font-size:12px;text-transform:uppercase}
+h1{font-size:clamp(28px,3.5vw,42px);line-height:1.25;letter-spacing:-.025em;margin:10px 0 12px} .subtitle{font-size:20px;color:var(--muted);margin:0 0 18px}
+.meta{display:flex;flex-wrap:wrap;gap:8px}.meta span{font-size:13px;background:var(--wash);border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--muted)}
+h2{font-size:26px;line-height:1.35;margin:42px 0 16px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+h3{font-size:20px;line-height:1.4;margin:30px 0 12px}h4{font-size:17px;margin:24px 0 10px}
+p{margin:10px 0}ul,ol{padding-left:1.5em}li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:18px 0 24px;font-size:14px;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top;min-width:100px}th{background:#eef3fa;font-weight:700}tr:nth-child(even) td{background:#fafbfd}
+blockquote{margin:18px 0;padding:12px 18px;border-left:4px solid var(--accent);background:#f4f7fc;color:var(--muted)}
+pre{overflow:auto;background:#f5f7fa;padding:16px;border-radius:10px}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em;overflow-wrap:anywhere}
+.diagram{background:#f6f8fc;border:1px solid var(--line);border-radius:12px;padding:18px;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;line-height:1.55}
+footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:12px}nav{position:relative;top:auto;max-height:none}main{padding:22px}h2{font-size:23px}}
+@media print{body{background:white}.layout{display:block;padding:0}nav{display:none}main{border:0;box-shadow:none;padding:0}.hero{break-after:avoid}h2,h3{break-after:avoid}table{display:table;overflow:visible}a{color:inherit;text-decoration:none}}
+</style>
+</head>
+<body><div class="layout"><nav><div class="nav-title">报告目录</div>
+<a href='#一-执行摘要'>一、执行摘要</a>
+<a href='#二-项目目标与研究问题'>二、项目目标与研究问题</a>
+<a href='#三-总体架构与职责划分'>三、总体架构与职责划分</a>
+<a class='sub' href='#3-1-各层的作用'>3.1 各层的作用</a>
+<a class='sub' href='#3-2-当前实现边界'>3.2 当前实现边界</a>
+<a href='#四-case-a-d-实验概览'>四、Case A–D 实验概览</a>
+<a class='sub' href='#4-1-案例对比'>4.1 案例对比</a>
+<a class='sub' href='#4-2-case-a-已有案例与模型结构基线'>4.2 Case A：已有案例与模型结构基线</a>
+<a class='sub' href='#4-3-case-b-基础任务执行基线'>4.3 Case B：基础任务执行基线</a>
+<a class='sub' href='#4-4-case-c-随机故障-整体换件与库存约束'>4.4 Case C：随机故障、整体换件与库存约束</a>
+<a class='sub' href='#4-5-case-d-新需求泛化与库存耗尽业务链'>4.5 Case D：新需求泛化与库存耗尽业务链</a>
+<a href='#五-business-ir-业务层中间表示'>五、Business IR：业务层中间表示</a>
+<a class='sub' href='#5-1-business-ir的定位'>5.1 Business IR的定位</a>
+<a class='sub' href='#5-2-顶层结构'>5.2 顶层结构</a>
+<a class='sub' href='#5-3-主要-section-的业务含义'>5.3 主要 Section 的业务含义</a>
+<a class='sub' href='#5-4-business-ir之外的其他重要概念'>5.4 Business IR之外的其他重要概念</a>
+<a href='#六-plan-ir-执行计划中间表示'>六、Plan IR：执行计划中间表示</a>
+<a class='sub' href='#6-1-plan-ir的定位'>6.1 Plan IR的定位</a>
+<a class='sub' href='#6-2-plan的主要结构'>6.2 Plan的主要结构</a>
+<a href='#七-business-ir到仿真结果的转换过程'>七、Business IR到仿真结果的转换过程</a>
+<a class='sub' href='#7-1-完整转换链'>7.1 完整转换链</a>
+<a class='sub' href='#7-2-转换关系图'>7.2 转换关系图</a>
+<a class='sub' href='#7-3-各层不能互相替代'>7.3 各层不能互相替代</a>
+<a href='#八-故障-维修-资源和库存的语义'>八、故障、维修、资源和库存的语义</a>
+<a class='sub' href='#8-1-故障率与随机种子'>8.1 故障率与随机种子</a>
+<a class='sub' href='#8-2-维修步骤与前置依赖'>8.2 维修步骤与前置依赖</a>
+<a class='sub' href='#8-3-资源约束'>8.3 资源约束</a>
+<a class='sub' href='#8-4-库存扣减'>8.4 库存扣减</a>
+<a class='sub' href='#8-5-时间-取消和终止'>8.5 时间、取消和终止</a>
+<a href='#九-实验方法与证据等级'>九、实验方法与证据等级</a>
+<a class='sub' href='#9-1-case-d的证据评价'>9.1 Case D的证据评价</a>
+<a class='sub' href='#9-2-后续实验的改进要求'>9.2 后续实验的改进要求</a>
+<a href='#十-当前能力边界与主要风险'>十、当前能力边界与主要风险</a>
+<a href='#十一-结论与下一阶段建议'>十一、结论与下一阶段建议</a>
+<a class='sub' href='#11-1-阶段性结论'>11.1 阶段性结论</a>
+<a class='sub' href='#11-2-后续建议'>11.2 后续建议</a>
+<a href='#附录-a-主要产物与路径'>附录 A：主要产物与路径</a>
+<a href='#附录-b-正式发布前需要补齐的核对项'>附录 B：正式发布前需要补齐的核对项</a>
+</nav><main><header class='hero'><div class='eyebrow'>阶段性实验报告 · 2026.10.22</div><h1>Riffoid IR Plugin 项目阶段性实验总报告</h1><p class='subtitle'>Case A–D、Business IR 结构及模型转换机制</p><div class='meta'><span>项目：Riffoid IR Plugin / Aircraft Business IR</span><span>实验范围：Case A–D</span><span>用途：阶段总结与后续实验基线</span></div></header>
+
+<h2 id='一-执行摘要'>一、执行摘要</h2>
+<p>本项目旨在探索一种基于Agent、Skill和多层中间表示（Intermediate Representation，IR）的建模仿真流程：用户使用自然语言描述飞机保障业务，Agent将业务需求转换为结构化的 Business IR，经过检查与编译生成可执行Plan，再由浏览器运行时执行仿真，并输出事件、指标、终态和运行记录。</p>
+<p>当前已形成以下技术链路：</p>
+<div class='diagram'>自然语言需求 → Agent / Skill → Business IR → 检查与封存 → 编译器 → Plan IR / 仿真包 → Browser Runtime → 事件、指标、终态与运行证据。</div>
+<p>这里需要强调：自然语言到Business IR的转换，目前主要由Agent遵循Skill和字段约定完成，并不是一个已经独立实现、完全确定性的自然语言解析器。</p>
+<p>Case A–D逐步探索了从已有模型结构、基础任务执行、随机故障与维修，到备件耗尽后维修无法完成的业务场景。Case D的核心业务链已在指定运行中闭合，并通过重放与参考实现对照获得了较强的实现一致性证据。</p>
+<p>但现有实验尚不能证明插件能够覆盖任意新需求。多机资源竞争、取消分支的运行验证、独立业务语义验证，以及部分时间和资源语义仍存在证据缺口。</p>
+<p>本报告将结论区分为：</p>
+<p>已确认： 有当前对话中的运行记录、报告摘要或既有检查结果支持。</p>
+<p>有限验证： 仅在特定模型、种子、时长或运行环境下成立。</p>
+<p>待核对： 需要回到对应源文件、原始需求或运行证据确认。</p>
+<p>未验证： 现有证据不能支持通过或不通过的结论。</p>
+<h2 id='二-项目目标与研究问题'>二、项目目标与研究问题</h2>
+<p>本项目关注的不仅是能否生成JSON，而是Agent能否在限定领域中完成可追溯的业务建模与仿真。</p>
+<p>主要研究问题如下：</p>
+<p>1、能否从自然语言中识别飞机、部件、任务、维修活动、资源、库存和时间约束？</p>
+<p>2、能否将业务规则映射到统一的Business IR，而不是直接生成运行时代码？</p>
+<p>3、Business IR能否通过检查、封存与编译，形成运行时可执行的Plan？</p>
+<p>4、Plan是否能够正确执行任务调度、随机故障、维修、资源使用和备件约束？</p>
+<p>5、仿真结果能否通过事件、指标、终态与重放记录进行核验？</p>
+<p>6、当需求超出当前Domain Pack时，能否明确识别能力缺口，而不是把模型成功编译误认为业务正确？</p>
+<h2 id='三-总体架构与职责划分'>三、总体架构与职责划分</h2>
+<h3 id='3-1-各层的作用'>3.1 各层的作用</h3>
+<table><thead><tr><th>层级</th><th>主要职责</th><th>主要产物</th></tr></thead><tbody>
+<tr><td>自然语言需求</td><td>描述业务规则、约束、时间和期望行为</td><td>原始需求文本</td></tr>
+<tr><td>Agent</td><td>理解需求、整理业务实体与关系、生成或修改模型</td><td>Business IR草稿</td></tr>
+<tr><td>Skill</td><td>规定建模流程、字段使用、工具顺序、诊断与边界处理</td><td>建模规范与操作约定</td></tr>
+<tr><td>Domain Pack</td><td>定义领域能力、允许表达的业务概念和执行边界</td><td>领域能力声明及相关实现</td></tr>
+<tr><td>Business IR</td><td>保存结构化业务事实和模型配置</td><td>business-ir.draft.json、封存模型</td></tr>
+<tr><td>Check/Seal</td><td>检查模型、校验业务合同、形成封存快照</td><td>校验结果、封存模型</td></tr>
+<tr><td>Compiler</td><td>将Business IR转换为可执行的仿真计划和相关产物</td><td>Plan IR、simpack、浏览器产物</td></tr>
+<tr><td>Browser Runtime</td><td>按Plan执行离散事件仿真</td><td>事件、指标、终态</td></tr>
+<tr><td>Run Record / Evidence</td><td>保存输入、种子、运行结果及核验材料</td><td>运行记录、manifest、实验报告</td></tr>
+</tbody></table>
+<h3 id='3-2-当前实现边界'>3.2 当前实现边界</h3>
+<p>项目使用固定领域包aircraft-support-pack/v0.1，语义配置包括legacy-minute-v1。</p>
+<p>Business IR的主要约束由字段说明、项目检查逻辑和外部编译器SDK共同承担；不能把某一份字段说明文档等同于完整的机器可读JSON Schema。</p>
+<p>编译器和浏览器运行时承担不同职责：</p>
+<p>1、编译器负责解释Business IR的语义并生成Plan。</p>
+<p>2、浏览器运行时负责执行编译后的Plan。</p>
+<p>3、Skill负责指导Agent如何建模，不等于Skill本身就是仿真引擎。</p>
+<p>4、Domain Pack的能力声明也不能单独证明每项功能已在浏览器端通过实际运行验证。</p>
+<h2 id='四-case-a-d-实验概览'>四、Case A–D 实验概览</h2>
+<h3 id='4-1-案例对比'>4.1 案例对比</h3>
+<table><thead><tr><th>案例</th><th>主要定位</th><th>业务重点</th><th>当前结论</th></tr></thead><tbody>
+<tr><td>Case A</td><td>已有案例与模型结构基线</td><td>既有案例的规则和结构</td><td>已知案例已封存</td></tr>
+<tr><td>Case B</td><td>基础任务执行基线</td><td>AC-01、LRU-01、计划任务、60分钟运行</td><td>已真实运行并归档基础任务结果</td></tr>
+<tr><td>Case C</td><td>故障与整体换件场景</td><td>指数故障、返航、拆卸、安装、备件库存扣减</td><td>已通过隔离工作区的检查、编译和浏览器运行验证部分关键行为</td></tr>
+<tr><td>Case D</td><td>新需求自主建模与复杂业务链验证</td><td>两次架次、故障、换件、库存耗尽、维修无法完成</td><td>核心目标业务链在指定运行中闭合，且重放结果一致</td></tr>
+</tbody></table>
+<p>这些案例不是四个完全独立的系统，而是逐步增加业务复杂度的实验序列。Case D的目标尤其在于观察Agent能否面对新的组合需求，独立完成建模、编译、执行、排障和证据整理。</p>
+<h3 id='4-2-case-a-已有案例与模型结构基线'>4.2 Case A：已有案例与模型结构基线</h3>
+<h4>实验目的：</h4>
+<p>Case A作为已有案例基线，用于理解项目原有的业务表达方式，以及后续案例可以继承或参照哪些实体、活动和约束。</p>
+<h4>当前结论：</h4>
+<p>已有记录表明Case A已封存。但当前汇总材料没有完整呈现Case A的原始自然语言需求、逐条业务规则和完整Business IR内容。</p>
+<p>因此，本报告不将Case A的具体业务规则写成未经核对的事实，也不将其未展示的字段推断为已验证功能。</p>
+<h4>正式报告需要回查的材料：</h4>
+<p>1、原始Case A需求或案例说明；</p>
+<p>2、Case A的business-ir.draft.json与封存模型；</p>
+<p>3、Case A对应的Plan、运行记录和验收结果；</p>
+<p>4、每条业务规则到Business IR字段的映射；</p>
+<p>5、哪些规则经过真实运行验证，哪些仅存在于模型中。</p>
+<h4>当前状态：</h4>
+<p>已有案例封存状态有记录；完整规则表与逐字段映射待从原始文件补齐。</p>
+<h3 id='4-3-case-b-基础任务执行基线'>4.3 Case B：基础任务执行基线</h3>
+<h4>实验目的：</h4>
+<p>验证基础飞机保障任务能否经过Business IR、检查、编译和浏览器运行完整执行，并产生可归档的结果。</p>
+<h4>已知业务元素：</h4>
+<p>1、飞机：AC-01；</p>
+<p>2、部件：LRU-01；</p>
+<p>3、仿真时长：60分钟；</p>
+<p>4、基础任务与保障活动；</p>
+<p>5、运行记录：run-a8cff47f-1673-4e0f-976b-af663803c863</p>
+<h4>已知运行结果：</h4>
+<p>此前归档的基础运行包含15条事件，核心任务按预期完成，完成类指标为1/1/1，库存没有发生变化。该结果支持基础任务执行链路在该案例配置下能够运行。</p>
+<h4>验证边界：</h4>
+<p>Case B主要证明基础任务场景能够执行，并不能据此证明：</p>
+<p>随机故障触发正确；</p>
+<p>维修步骤正确；</p>
+<p>库存不足能够阻止维修；</p>
+<p>多机资源竞争能够正确处理；</p>
+<p>所有时间边界和取消规则都已通过验证。因此，Case B是后续故障与维修实验的基础对照，而不是整个保障业务能力的完整验收。</p>
+<h3 id='4-4-case-c-随机故障-整体换件与库存约束'>4.4 Case C：随机故障、整体换件与库存约束</h3>
+<h4>实验目的：</h4>
+<p>在基础任务上增加部件随机故障、故障后维修、整体换件、维修步骤串行执行和本地备件库存约束。</p>
+<h4>核心业务规则：</h4>
+<p>1、飞机安装有可故障部件LRU-01。</p>
+<p>2、部件故障服从指数分布。</p>
+<p>3、故障后飞机返航并进入维修流程。</p>
+<p>4、维修采用整体换件方式。</p>
+<p>5、维修包含拆卸与安装等串行步骤。</p>
+<p>6、安装步骤需要匹配的备件。</p>
+<p>7、备件在维修步骤开始时从库存扣减。</p>
+<p>8、维修完成后，飞机恢复可用状态。</p>
+<p>Case C的确切时长、初始库存和各项字段值，应以对应的 model/case-c/business-ir.draft.json及封存产物为准。已知编译后的Plan中包含failure_rate_per_hour=2.0、repair_duration_minutes=8，并曾出现库存2、换件需求1的配置。</p>
+<h4>运行证据：</h4>
+<p>隔离工作区中完成了检查、编译和真实浏览器运行：</p>
+<p>1、Seed 0：没有发生故障，库存保持为 2。</p>
+<p>2、Seed 139：触发故障并进入换件维修；REMOVE步骤在23–25分钟执行，FIT步骤在25-33分钟执行，维修于第33分钟完成，库存由2减为1。</p>
+<p>这说明在对应运行中，故障、返航、拆卸、安装、维修完成及库存扣减链路得到实际触发。</p>
+<h4>重要限制：</h4>
+<p>Seed 0没有触发故障，因此不能用它证明维修与备件分支。Seed 139则证明了特定故障链能够发生，但不能仅凭一个触发样本证明指数分布参数的统计正确性。</p>
+<p>另外，Case C曾出现replacement_ratio=0.5被检查拒绝的记录。这说明模型字段受领域合同约束，不能假设任意看似合理的数值都能通过校验。</p>
+<p>既有基线中还存在Case C故障率字段与开发测试预期不一致的问题：模型配置为rate: 2.0，而tests/development.test.mjs第136行仍期待1/30。该问题未在Case D中修复，后续应单独处理，不能把它与Case D的结果混为一谈。</p>
+<h3 id='4-5-case-d-新需求泛化与库存耗尽业务链'>4.5 Case D：新需求泛化与库存耗尽业务链</h3>
+<h4>实验目的：</h4>
+<p>Case D不只是继续增加几个参数，而是测试Agent能否根据新的组合需求，自主建立完整的Business IR、完成检查和编译、运行仿真、排查问题并保存证据。</p>
+<p>原始需求的核心规则：</p>
+<p>1、飞机AC-01在一个保障日内计划执行两个架次，计划起飞时间分别为第20分钟和第40分钟。</p>
+<p>2、每个架次飞行持续10分钟。</p>
+<p>3、起飞前10分钟开始准备，航前准备耗时3分钟，需要一名机务人员和一台地面车。</p>
+<p>4、若架次在计划起飞时间之后5分钟内仍无法起飞，则取消架次。</p>
+<p>5、同一天的第二次起飞按再次放行处理，不重复占用完整航前准备资源。</p>
+<p>6、正常返场后进行2分钟航后检查，同样需要一名机务人员和一台地面车。</p>
+<p>7、飞机上的LRU-01服从指数故障分布，平均每小时故障2次。</p>
+<p>8、安装节点本身不发生故障。</p>
+<p>9、飞行中发生部件故障时，飞机返场，当前架次视为未正常完成。</p>
+<p>10、维修采用整体换件；拆卸耗时2分钟，安装有效维修时长8分钟。</p>
+<p>11、安装需要一份匹配的LRU-PART备件。</p>
+<p>12、拆卸和安装均需要一名技术人员和一台地面车。</p>
+<p>13、flight-line节点初始有一名人员、一台地面车和一份LRU-PART。</p>
+<p>14、备件在维修步骤开始时扣减。</p>
+<p>15、第一次换件成功后，库存变为零。</p>
+<p>16、第二次发生同类故障时仍然需要申请备件；库存不足导致安装步骤无法启动，维修无法完成，飞机保持维修状态。</p>
+<p>17、维修完成后飞机恢复可用，故障计时重新开始。</p>
+<p>18、仿真持续120分钟，以仿真时长作为唯一终止条件。</p>
+<p>19、支持指定随机种子并可重放。</p>
+<h4>核心运行结果：</h4>
+<p>目标运行：run-26f16c2a-471e-45d0-b476-a480ce2e9a54</p>
+<p>运行种子：4。</p>
+<p>关键事件链如下：</p>
+<p>1、第一架次在第20分钟起飞。</p>
+<p>2、第29分钟发生飞行中LRU故障，架次异常结束。</p>
+<p>3、第一次维修拆卸在29–31分钟执行。</p>
+<p>4、安装步骤在31–39分钟执行，备件在安装开始时被扣减。</p>
+<p>5、第39分钟维修完成，库存变为零。</p>
+<p>6、第二架次在第40分钟起飞。</p>
+<p>7、第44分钟再次发生故障，飞机进入维修状态。</p>
+<p>8、第二次维修申请备件时发现库存耗尽。</p>
+<p>9、安装步骤未启动，维修无法完成。</p>
+<p>10、飞机保持maintenance状态直至第120分钟仿真终止。</p>
+<h4>核心终态：</h4>
+<p>飞机状态：maintenance；</p>
+<p>LRU-PART库存：0；</p>
+<p>failed_sorties=2；</p>
+<p>completed_sorties=0；</p>
+<p>spare_consumed_total=1；</p>
+<p>spare_demand_total=2；</p>
+<p>spare_immediately_filled_total=1；</p>
+<p>spare_fill_rate=0.5；</p>
+<p>shortage_events=1；</p>
+<p>仿真耗时：120分钟。</p>
+<h4>重放与参考实现对照：</h4>
+<p>重放运行：run-7bfb0ee8-8627-4baf-830b-3020c4e1e276</p>
+<p>已报告的对照结果：</p>
+<p>1、两次运行的metrics、37条events、terminalState、status和stopReason一致。</p>
+<p>2、CPython参考实现与浏览器结果在排除参考实现独有的资源事件后，37/37 条业务事件匹配。</p>
+<p>3、20/20 项共同指标匹配。</p>
+<p>这支持该模型在指定随机种子下具有较好的重放一致性和实现一致性。但参考实现与浏览器共享同一编译器 lowering 和同一份 Plan，因此该对照不能完全替代独立的业务语义 oracle。</p>
+<h4>Case D 的限制：</h4>
+<p>32 个扫描种子中，只有 3 个命中目标双故障链。</p>
+<p>取消窗口在 33 次运行中零触发，因此取消规则尚未得到实际运行验证。</p>
+<p>第二架次准备时点存在计划时间为30、实际生成时间为39的差异。</p>
+<p>正常航后检查在独立基线运行中得到验证，但不能据此认为目标种子4的所有正常分支均已覆盖。</p>
+<p>指数故障只产生少量样本，不能证明分布参数的统计正确性。</p>
+<p>浏览器运行结果标记为local-unverified，未经过服务端独立复算。</p>
+<p>需求转写和验收标准的文件时间晚于运行时间，验收oracle不是严格的运行前预注册材料。</p>
+<h4>Case D 的总体结论：</h4>
+<p>Case D 证明了插件能够在当前领域能力范围内完成一项较复杂的新业务组合，并在指定运行中复现库存耗尽后维修无法完成的关键链路。但是它没有证明插件可以处理任意新需求，也没有证明所有业务规则、所有随机分支和所有部署环境均已验证。</p>
+<h2 id='五-business-ir-业务层中间表示'>五、Business IR：业务层中间表示</h2>
+<h3 id='5-1-business-ir的定位'>5.1 Business IR的定位</h3>
+<p>Business IR 是对业务事实和业务规则的结构化表达。它回答的是：</p>
+<p>1、有哪些飞机、部件和保障节点？</p>
+<p>2、飞机执行哪些任务？</p>
+<p>3、任务需要哪些准备和返场活动？</p>
+<p>4、哪些部件可能发生故障？</p>
+<p>5、维修由哪些步骤构成？</p>
+<p>6、维修需要哪些资源与备件？</p>
+<p>7、仿真什么时候开始、持续多久、何时停止？</p>
+<p>Business IR 不是最终执行代码。它是编译器将业务描述转化为 Plan 的输入。</p>
+<p>当前版本标识为：aircraft-business-ir/v1</p>
+<p>语义profile：legacy-minute-v1</p>
+<p>核心业务内容位于：payload.sections</p>
+<h3 id='5-2-顶层结构'>5.2 顶层结构</h3>
+<p>Business IR可从以下结构理解：</p>
+<div class='diagram'>{</div>
+<p>&quot;version&quot;: &quot;aircraft-business-ir/v1&quot;,</p>
+<p>&quot;fingerprint&quot;: &quot;...&quot;,</p>
+<p>&quot;payload&quot;: {</p>
+<p>&quot;sections&quot;: {</p>
+<p>&quot;$root&quot;: {},</p>
+<p>&quot;aircraft&quot;: [],</p>
+<p>&quot;equipment_tree&quot;: [],</p>
+<p>&quot;mission_profile&quot;: {},</p>
+<p>&quot;monte_carlo&quot;: {},</p>
+<p>&quot;project_identity&quot;: {},</p>
+<p>&quot;stop_policy&quot;: {},</p>
+<p>&quot;support_activities&quot;: [],</p>
+<p>&quot;support_network&quot;: {},</p>
+<p>&quot;time&quot;: {}</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>
+<h4>顶层字段说明：</h4>
+<table><thead><tr><th>字段</th><th>含义</th></tr></thead><tbody>
+<tr><td>version</td><td>Business IR 的合同版本，决定采用哪一套业务结构</td></tr>
+<tr><td>fingerprint</td><td>模型内容的指纹，用于识别和追踪特定模型版本</td></tr>
+<tr><td>payload</td><td>实际业务模型的载体</td></tr>
+<tr><td>payload.sections</td><td>按业务领域组织的分区</td></tr>
+<tr><td>legacy-minute-v1</td><td>时间语义配置，表示当前模型采用的分钟制语义约定</td></tr>
+</tbody></table>
+<h3 id='5-3-主要-section-的业务含义'>5.3 主要 Section 的业务含义</h3>
+<p>$root：根级配置和模型级语义入口。具体允许存放的字段应以当前字段合同为准，不应将所有全局规则都随意放入此处。</p>
+<p>aircraft：描述飞机实体或飞机相关配置，例如飞机标识、型号及任务可用性相关信息。在案例中，AC-01 是飞机标识。是否允许多架飞机、如何绑定任务以及如何区分飞机尾号，必须由 Schema、编译器和运行时的实际能力共同确认。</p>
+<p>equipment_tree：描述飞机与安装设备、部件之间的结构关系。例如：飞机AC-01；安装部件LRU-01；部件所属的安装节点。</p>
+<p>（需要区分两个概念：安装节点表示结构位置或关系，LRU表示可故障部件。Case D明确要求安装节点不发生故障，而LRU可以发生故障。）</p>
+<p>mission_profile：描述计划任务、架次及相关的任务时间参数。例如：计划架次开始时间；飞行持续时间；成功或失败条件；架次与飞机的关联。</p>
+<p>（具体任务事件如何由该Section转换为Plan中的mission、wave或活动对象，属于编译器的转换规则，而不是仅凭字段名称就能确定。）</p>
+<p>monte_carlo：描述随机仿真相关配置，例如随机种子或随机实验设置。</p>
+<p>（必须注意：指定随机种子有助于复现同一随机过程，但不能保证模型本身语义正确，也不能代替分布参数的统计验证。）</p>
+<p>project_identity：描述项目或模型身份相关的信息，用于标识模型、领域或实验配置。精确字段含义应以当前模型字段说明为准。</p>
+<p>stop_policy：描述仿真终止条件。</p>
+<p>（例如，Case D要求仿真持续120分钟，并以时长作为唯一终止条件。其对应的实际Plan字段包括duration_minutes与natural_completion_enabled等）</p>
+<p>support_activities：描述保障活动及其步骤，例如：航前准备；航后检查；故障后拆卸；安装或换件；步骤持续时间；前后置关系；所需资源；所需备件。</p>
+<p>support_network：描述保障网络及保障节点，包括人员、设备和库存等资源所在位置。</p>
+<p>Case C、D中的flight-line就属于保障节点概念。具体库存字段与资源容量字段的准确路径应通过实际Business IR和字段说明确认。</p>
+<p>Time：描述时间配置及时间单位相关约定。</p>
+<p>（在当前分钟制语义下，必须明确计划时间、持续时间、终止时间和跨日规则之间的关系，避免将绝对时间、相对时间和持续时间混用）</p>
+<h3 id='5-4-business-ir之外的其他重要概念'>5.4 Business IR之外的其他重要概念</h3>
+<p>Business IR的Section组织业务事实，但编译器和运行时还可能引入Plan专用字段。它们不应被误认为是Business IR中同名字段的直接复制。</p>
+<p>例如：</p>
+<p>failure_distribution表示故障分布配置；</p>
+<p>rate或等价字段表示分布参数，必须确认其单位和语义；</p>
+<p>repair_duration_minutes 表示维修时长语义；</p>
+<p>replacement_ratio 表示特定换件相关参数，受字段合同限制；</p>
+<p>spares 描述步骤需要的备件；</p>
+<p>predecessors 描述步骤依赖；</p>
+<p>resource_nodes[].inventory 描述编译后计划中的库存状态或初始库存。</p>
+<h2 id='六-plan-ir-执行计划中间表示'>六、Plan IR：执行计划中间表示</h2>
+<h3 id='6-1-plan-ir的定位'>6.1 Plan IR的定位</h3>
+<p>Plan IR是编译器输出的执行层模型。它将业务概念转换为运行时能够执行的任务、活动、步骤、资源、故障机制、库存和终止规则。</p>
+<p>当前已知Plan版本标识为：aircraft-support-plan/v1alpha2</p>
+<h3 id='6-2-plan的主要结构'>6.2 Plan的主要结构</h3>
+<table><thead><tr><th>Plan结构或字段</th><th>含义</th></tr></thead><tbody>
+<tr><td>missions[]</td><td>可执行任务或架次相关计划</td></tr>
+<tr><td>missions[].required_aircraft</td><td>任务所需飞机数量或相关要求</td></tr>
+<tr><td>missions[].min_required_aircraft</td><td>任务最低飞机需求相关约束</td></tr>
+<tr><td>activities[]</td><td>可执行的保障活动</td></tr>
+<tr><td>activities[].maintenance_methods</td><td>活动关联的维修方法</td></tr>
+<tr><td>activities[].replacement_ratio</td><td>换件相关参数</td></tr>
+<tr><td>steps[]</td><td>活动内部的执行步骤</td></tr>
+<tr><td>steps[].spares</td><td>步骤需要的备件</td></tr>
+<tr><td>steps[].predecessors</td><td>步骤之间的前置依赖关系</td></tr>
+<tr><td>resource_nodes[]</td><td>资源或保障节点</td></tr>
+<tr><td>resource_nodes[].inventory</td><td>节点库存相关配置</td></tr>
+<tr><td>phases</td><td>计划中的阶段或阶段化执行配置</td></tr>
+<tr><td>duration_minutes</td><td>仿真时长</td></tr>
+<tr><td>natural_completion_enabled</td><td>是否允许按自然完成条件终止</td></tr>
+<tr><td>unsupported_features</td><td>对当前计划或执行能力缺口的声明</td></tr>
+<tr><td>preventive_cycles</td><td>预防性维修相关计划结构</td></tr>
+<tr><td>supply_routes</td><td>备件供应或运输路线相关结构</td></tr>
+</tbody></table>
+<h2 id='七-business-ir到仿真结果的转换过程'>七、Business IR到仿真结果的转换过程</h2>
+<h3 id='7-1-完整转换链'>7.1 完整转换链</h3>
+<p>第一步：自然语言理解与业务建模</p>
+<p>输入用户的原始需求。</p>
+<p>Agent根据Skill和字段约定，识别：实体；任务；时间；活动；故障分布；维修步骤；资源；库存；约束；终止条件。</p>
+<p>随后生成或修改Business IR草稿。</p>
+<p>第二步：检查与封存</p>
+<p>项目检查工具读取Business IR草稿，并调用检查及外部SDK校验逻辑。</p>
+<p>检查重点包括：IR版本与结构；字段类型与约束；业务ID和引用关系；当前领域合同是否允许该模型；相关语义是否能够进入后续编译。</p>
+<p>通过后形成封存模型或内容寻址快照。</p>
+<p>第三步：编译为Plan IR</p>
+<p>项目编译流程调用外部编译器，读取封存的Business IR，并生成执行计划与相关交付产物。</p>
+<p>常见产物包括：Plan IR；仿真包（simpack）；manifest或lineage等追溯信息；浏览器执行所需的计划产物。</p>
+<p>在这一步，业务层表达会被转换为运行层结构，例如任务、活动、步骤、故障参数、资源节点、库存和终止条件。</p>
+<p>第四步：运行前能力检查</p>
+<p>浏览器端会对Plan做能力诊断。</p>
+<p>如果模型依赖的功能不受当前运行时支持，不能仅因Business IR合法或编译成功，就认为它可以正确执行。</p>
+<p>第五步：浏览器运行时执行</p>
+<p>浏览器运行时加载Plan，使用指定随机种子执行仿真。</p>
+<p>运行过程中会处理相应的任务、故障、维修步骤、资源或库存约束，并生成事件和状态变化。</p>
+<p>例如Case D中：飞行中故障导致当前架次异常结束；飞机进入维修状态；第一次安装步骤成功启动并消耗备件；第二次备件请求因库存为零而无法启动安装；飞机保持维修状态直至仿真时长终止。</p>
+<p>第六步：读取结果与形成证据</p>
+<p>运行结束后读取：</p>
+<p>runId；</p>
+<p>运行状态与停止原因；</p>
+<p>events；</p>
+<p>metrics；</p>
+<p>terminalState；</p>
+<p>运行配置及可追溯信息。</p>
+<p>实验验收再将这些结果与预先确定的预期结果进行比较。</p>
+<p>对于关键业务链，应同时检查事件顺序、指标、终态和资源或库存不变量，而不能只看运行是否返回succeeded。</p>
+<h3 id='7-2-转换关系图'>7.2 转换关系图</h3>
+<div class='diagram'>自然语言需求</div>
+<p>|</p>
+<p>v</p>
+<p>Agent + Skill</p>
+<p>|</p>
+<p>v</p>
+<p>Business IR草稿</p>
+<p>|</p>
+<p>v</p>
+<p>Check / Seal</p>
+<p>|</p>
+<p>v</p>
+<p>封存Business IR</p>
+<p>|</p>
+<p>v</p>
+<p>外部sim-engine-compiler</p>
+<p>|</p>
+<p>v</p>
+<p>Plan IR + simpack + 相关元数据</p>
+<p>|</p>
+<p>v</p>
+<p>运行前能力诊断</p>
+<p>|</p>
+<p>v</p>
+<p>Browser Runtime + 随机种子</p>
+<p>|</p>
+<p>v</p>
+<p>Events + Metrics + Terminal State</p>
+<p>|</p>
+<p>v</p>
+<p>重放、对照、验收与实验报告</p>
+<h3 id='7-3-各层不能互相替代'>7.3 各层不能互相替代</h3>
+<table><thead><tr><th>结果</th><th>能说明什么</th><th>不能单独说明什么</th></tr></thead><tbody>
+<tr><td>Business IR生成成功</td><td>Agent产生了结构化模型</td><td>业务规则正确</td></tr>
+<tr><td>Check通过</td><td>模型满足当前校验合同</td><td>所有功能都受运行时支持</td></tr>
+<tr><td>Compile成功</td><td>编译器能够生成相关产物</td><td>运行结果符合业务预期</td></tr>
+<tr><td>Run成功</td><td>仿真执行完成或返回成功状态</td><td>关键分支一定被触发</td></tr>
+<tr><td>Replay一致</td><td>相同配置下结果可复现</td><td>模型的业务语义正确</td></tr>
+<tr><td>参考实现匹配</td><td>两个执行结果具有一致性</td><td>两个实现完全独立</td></tr>
+<tr><td>Oracle验收通过</td><td>结果满足预先固定的预期条件</td><td>未覆盖的业务能力也正确</td></tr>
+</tbody></table>
+<h2 id='八-故障-维修-资源和库存的语义'>八、故障、维修、资源和库存的语义</h2>
+<h3 id='8-1-故障率与随机种子'>8.1 故障率与随机种子</h3>
+<p>Case C、D使用了指数故障分布。</p>
+<p>在指数分布语义下，如果平均每小时故障2次，对应的故障率参数为每小时2次；如果编译器使用每分钟故障率，则数值需要进行单位转换。</p>
+<p>例如：</p>
+<div class='diagram'>[<br>\lambda_{\text{minute}} =<br>\frac{\lambda_{\text{hour}}}{60}<br>]</div>
+<p>因此，每小时2次对应每分钟(2/60)次。</p>
+<p>但必须以当前模型字段合同明确的rate定义为准，不能只看字段名推断它使用每小时还是每分钟单位。</p>
+<p>随机种子用于复现随机过程；它不是故障率参数，也不能取代分布正确性检验。</p>
+<h3 id='8-2-维修步骤与前置依赖'>8.2 维修步骤与前置依赖</h3>
+<p>维修流程可拆为多个有依赖关系的步骤。</p>
+<p>Case D的维修链为：</p>
+<p>REMOVE：2分钟；</p>
+<p>FIT/安装：有效维修时长8分钟；</p>
+<p>总维修时间：10分钟。</p>
+<p>安装步骤依赖拆卸步骤完成，并需要一份匹配备件。</p>
+<p>如果安装无法开始，则不能将维修视为完成。对于Case D的第二次维修，库存短缺使安装步骤无法启动，飞机因此保持维修状态。</p>
+<h3 id='8-3-资源约束'>8.3 资源约束</h3>
+<p>航前准备、航后检查和维修步骤都可能需要机务人员或地面车。</p>
+<p>资源容量决定同一时间可以开展多少工作。模型中表达资源需求与运行时实际发生资源分配，是两个不同层次：</p>
+<p>Business IR表达业务所需资源；</p>
+<p>Plan IR将需求转换为执行计划中的资源约束；</p>
+<p>Runtime决定资源是否可用、步骤能否开始以及何时释放资源。</p>
+<p>Case D的部分资源证据来自参考实现，因为浏览器端没有生成相同粒度的资源事件。因此，资源使用的直接浏览器证据仍应加强。</p>
+<h3 id='8-4-库存扣减'>8.4 库存扣减</h3>
+<p>Case D 的关键规则是：备件在维修步骤开始时扣减。</p>
+<p>如果初始库存为 1：</p>
+<div class='diagram'>第一次安装开始：库存 1 → 0；</div>
+<p>第二次安装申请：库存不足；</p>
+<p>第二次安装不启动；</p>
+<p>维修不能完成。</p>
+<p>这条链应通过事件、库存状态和飞机终态共同核验。</p>
+<h3 id='8-5-时间-取消和终止'>8.5 时间、取消和终止</h3>
+<p>至少要区分：</p>
+<p>计划任务时间；</p>
+<p>活动准备时间；</p>
+<p>活动持续时间；</p>
+<p>实际开始时间；</p>
+<p>取消时间窗；</p>
+<p>仿真终止时间。</p>
+<p>这些时间不能仅凭一个“开始时间”字段互相替代。</p>
+<p>Case D中，第二架次的计划准备时点与实际生成时间存在偏差。取消窗口虽然已建模，但当前运行没有触发对应分支。因此，这两项不能被列为完全通过的运行验证。</p>
+<h2 id='九-实验方法与证据等级'>九、实验方法与证据等级</h2>
+<h3 id='9-1-case-d的证据评价'>9.1 Case D的证据评价</h3>
+<p>Case D已获得较强和实现一致性证据：关键业务链发生、重放一致、参考实现与浏览器事件和指标匹配。</p>
+<p>但由于需求转写和验收标准晚于运行，严格的运行前预注册Oracle不成立。因此，不宜把该实验整体描述为完成了独立预注册验收。</p>
+<h3 id='9-2-后续实验的改进要求'>9.2 后续实验的改进要求</h3>
+<p>在首次运行前保存原始需求和逐项验收标准。</p>
+<p>预先固定关键事件、指标、终态和不变量。</p>
+<p>对取消、库存短缺等关键分支设置可重复触发条件。</p>
+<p>保存所有种子的运行结果，而不是只保存命中目标链的种子。</p>
+<p>记录Agent的原始模型、修改过程、诊断、运行和人工介入。</p>
+<p>使用不依赖同一lowering的独立业务不变量检查。</p>
+<p>对失败结果和未覆盖分支如实归档。</p>
+<p>将单机单日实验与多机、跨日等新结构实验区分开来。</p>
+<h2 id='十-当前能力边界与主要风险'>十、当前能力边界与主要风险</h2>
+<p>当前实验支持的范围主要是飞机保障领域中已验证的单机任务、飞行暴露指数故障、固定维修时长、串行保障步骤和本地备件库存等组合。</p>
+<p>以下能力不能仅凭Case A–D直接认定已全面验证：</p>
+<p>多架飞机对有限资源的竞争；</p>
+<p>逐机尾架次绑定和多机任务波次；</p>
+<p>备件运输与补货；</p>
+<p>预防性维修；</p>
+<p>非指数故障与日历时钟语义；</p>
+<p>取消时间窗的实际运行分支；</p>
+<p>所有资源预留与释放行为；</p>
+<p>服务端独立复算和宿主部署环境的一致性；</p>
+<p>真实保障业务中的规则有效性。</p>
+<p>当前浏览器结果中的local-unverified也意味着，实验结果应被视为本地执行证据，而不是经过服务端独立验证的正式业务结果。</p>
+<h2 id='十一-结论与下一阶段建议'>十一、结论与下一阶段建议</h2>
+<h3 id='11-1-阶段性结论'>11.1 阶段性结论</h3>
+<p>新业务需求的表达与泛化能力：</p>
+<p>目前主要验证的是单架飞机、单日保障、固定维修步骤和本地备件库存。面对结构不同的需求，插件能否表达、编译和执行，还缺少证据。</p>
+<p>（当前Domain Pack和编译器支持的是一个有限的业务子集，而不是任意飞机保障业务）</p>
+<p>复杂调度与时间语义：</p>
+<p>Case D已暴露出第二架次准备时间的计划值与实际生成时间不一致：计划时点为第30分钟，实际生成时间为第39分钟，另外取消时间窗虽已建模，但33次运行没有一次触发取消分支</p>
+<p>（目前有些时间规则能被写进模型，但其执行语义和边界行为尚未得到充分验证）</p>
+<p>资源竞争与资源状态验证：</p>
+<p>当前案例包含人员、地面车等资源需求，但还不足以证明复杂的资源竞争机制正确</p>
+<p>（模型声明了资源需求，不代表运行时的资源预留、分配和释放机制已经通过测试）</p>
+<p>故障、维修和供应链的完整语义：</p>
+<p>Case C、D已经验证了部分故障、维修和备件扣减链路，但尚未形成全面覆盖</p>
+<p>（已验证部分具体业务链，不等于已经验证整个业务保障的完整语义）</p>
+<p>独立验证与结果可信度：</p>
+<p>Case D的验收标准是在运行之后才形成，没有严格的预注册Oracle。</p>
+<p>浏览器执行标记为local-unverified，缺少服务端独立复算。</p>
+<p>参考实现与浏览器共享同一编译器lowering和同一Plan，不能完全独立地证明业务语义正确。</p>
+<p>32 个种子中只有 3 个命中目标双故障链。</p>
+<p>目前主要依赖事件和指标对照，独立的业务不变量检查仍需加强。</p>
+<p>Agent工作流的规范化与可追溯性：</p>
+<p>Agent已能完成建模、编译、运行、排障和证据整理，但目前实验流程仍存在一些方法上的不足，还需要一套规范的实验协议，才能稳定地证明它做对了什么。</p>
+<h3 id='11-2-后续建议'>11.2 后续建议</h3>
+<p>下一阶段建议先进行Case E的只读能力调查与实验设计，优先研究与Case D结构不同的场景，例如双机竞争有限人员和地面车。</p>
+<p>正式运行前，应先确认当前Skill、Business IR合同、Domain Pack、编译器和Runtime对目标场景的实际支持，并预先固定验收标准。</p>
+<p>如果发现能力缺口，应记录为待扩展能力，而不是直接把“无法表达”“无法编译”“无法执行”和“业务结果错误”混为一类。</p>
+<h2 id='附录-a-主要产物与路径'>附录 A：主要产物与路径</h2>
+<table><thead><tr><th>产物</th><th>路径或标识</th></tr></thead><tbody>
+<tr><td>Business IR 草稿</td><td>model/business-ir.draft.json</td></tr>
+<tr><td>Case C Business IR 草稿</td><td>model/case-c/business-ir.draft.json</td></tr>
+<tr><td>Case D Business IR 草稿</td><td>model/case-d/business-ir.draft.json</td></tr>
+<tr><td>Skill</td><td>skills/riffoid-ir/SKILL.md</td></tr>
+<tr><td>字段说明</td><td>docs/model-fields.md</td></tr>
+<tr><td>领域扩展说明</td><td>docs/domain-development.md</td></tr>
+<tr><td>编译适配</td><td>scripts/compiler.py</td></tr>
+<tr><td>项目工具与工作流</td><td>src/project.mjs</td></tr>
+<tr><td>浏览器运行时</td><td>browser/runtime.js</td></tr>
+<tr><td>浏览器 Worker</td><td>browser/worker.js</td></tr>
+<tr><td>Case D正式报告</td><td>model/case-d/evidence/08-new-requirement-coverage-experiment-report.md</td></tr>
+<tr><td>Case D证据清单</td><td>model/case-d/evidence/manifest.json</td></tr>
+<tr><td>Case D证据索引</td><td>model/case-d/evidence/README.md</td></tr>
+</tbody></table>
+<h2 id='附录-b-正式发布前需要补齐的核对项'>附录 B：正式发布前需要补齐的核对项</h2>
+<p>从Case A原始文件恢复完整业务需求和逐条规则。</p>
+<div class='diagram'>对Case A–D分别建立“原始需求 →Business IR字段 →Plan字段 → 运行事件 / 指标”的映射表。</div>
+<p>从真实模型文件核对各Section的完整字段、类型、单位、必填约束和默认值。</p>
+<p>从实际Plan核对Business IR到Plan的字段映射，而不是仅凭名称推断。</p>
+<p>将Case C的故障率参数与开发测试预期冲突单独登记。</p>
+<p>对Case D的取消窗口和第二架次准备时间差异建立独立缺陷记录。</p>
+<p>保留当前Case D报告与manifest，不覆盖原始证据。</p>
+<p>对尚未验证的功能统一使用“待验证”或“能力缺口”描述，避免将静态存在等同于运行通过。</p>
+<p>报告状态： 阶段性总报告草案。Case A 完整规则及各案例的逐字段 IR 映射表，需结合原始模型和运行产物完成最后核对后，才能作为完整的逐字段技术基线发布。</p>
+<footer>由原始 Word 阶段性实验总报告转换为静态 HTML。结论与限制沿用原报告；正式发布前请核对文件路径、公开范围及实验数据。</footer></main></div></body></html>

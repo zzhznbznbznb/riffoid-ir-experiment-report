@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>单一LUR与多种LRU场景对比实验报告 · Riffoid IR Experiment Report</title>
+<meta name="description" content="Riffoid IR 插件：单一 LRU 基线与多 LRU 场景对比实验报告">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #f6f8fa;
+  --fg: #1f2328;
+  --muted: #656d76;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --header: #24292f;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 72px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--header); color: #fff;
+  border-bottom: 4px solid var(--accent);
+}
+.site-header .inner {
+  max-width: 1180px; margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.site-header .mark {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #fff; color: var(--header);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex: none;
+}
+.site-header .title { font-weight: 600; font-size: 15px; }
+.site-header .subtitle { color: #8b949e; font-size: 13px; margin-left: auto; white-space: nowrap; }
+.hero {
+  background: linear-gradient(135deg, #0969da 0%, #218bff 60%, #54aeff 100%);
+  color: #fff; padding: 48px 24px 56px;
+}
+.hero .inner { max-width: 1180px; margin: 0 auto; }
+.hero h1 { margin: 0 0 12px; font-size: 32px; font-weight: 700; letter-spacing: .5px; }
+.hero .meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+.hero .badge {
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px; padding: 3px 12px;
+}
+.layout {
+  max-width: 1180px; margin: -28px auto 60px; padding: 0 24px;
+  display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px;
+  align-items: start;
+}
+@media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+nav.toc {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 6px 16px 16px; position: sticky; top: 84px;
+  max-height: calc(100vh - 108px); overflow: auto;
+  box-shadow: 0 3px 10px rgba(31,35,40,.06);
+}
+@media (max-width: 920px) { nav.toc { position: static; max-height: none; } }
+nav.toc .toc-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .08em; margin: 0 0 8px 10px; }
+nav.toc ul { list-style: none; margin: 0; padding: 0; }
+nav.toc li a {
+  display: block; padding: 4px 10px; border-radius: 6px;
+  color: var(--fg); text-decoration: none; font-size: 13.5px;
+}
+nav.toc li.toc-l3 a { padding-left: 26px; color: var(--muted); }
+nav.toc li a:hover { background: #eaeef2; color: var(--accent); }
+nav.toc li a.active { background: #ddf4ff; color: var(--accent); font-weight: 600; }
+main {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 40px 48px; box-shadow: 0 3px 10px rgba(31,35,40,.06);
+  min-width: 0;
+}
+@media (max-width: 640px) { main { padding: 24px 18px; } }
+main h2 {
+  font-size: 24px; margin: 44px 0 16px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+main h2:first-of-type { margin-top: 0; }
+main h3 { font-size: 19px; margin: 32px 0 12px; }
+main p { margin: 0 0 16px; }
+main ul { margin: 0 0 16px; padding-left: 26px; }
+main li { margin: 6px 0; }
+main strong { font-weight: 600; }
+.table-wrap { overflow-x: auto; margin: 0 0 20px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; font-weight: 600; }
+tr:nth-child(2n) td { background: #fbfcfd; }
+code { background: rgba(175,184,193,.2); padding: .2em .4em; border-radius: 6px; font-size: 85%; font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 24px 48px; }
+footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="mark">R</span>
+    <span class="title">riffoid-ir-experiment-report</span>
+    <span class="subtitle">LRU Experiment · GitHub Pages</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="inner">
+    <h1>单一LUR与多种LRU场景对比实验报告</h1>
+    <div class="meta">
+      <span class="badge">Riffoid IR 插件</span>
+      <span class="badge">单一 LRU 基线（Case D） vs 多 LRU 三类型实验</span>
+      <span class="badge">仿真 120 分钟 · seed 4/8/22/1</span>
+      <span class="badge">发布于 2026-10-27</span>
+    </div>
+  </div>
+</section>
+
+<div class="layout">
+  <nav class="toc" aria-label="目录">
+    <p class="toc-title">目录 Contents</p>
+    <ul>
+<li class="toc-l2"><a href="#sec-2">一、实验目的</a></li>
+<li class="toc-l2"><a href="#sec-3">二、总体任务流程与仿真剖面</a></li>
+<li class="toc-l2"><a href="#sec-4">三、装备系统与组成结构</a></li>
+<li class="toc-l3"><a href="#sec-5">3.1单LRU基线</a></li>
+<li class="toc-l3"><a href="#sec-6">3.2多LRU实验</a></li>
+<li class="toc-l2"><a href="#sec-7">四、质量特性与故障参数</a></li>
+<li class="toc-l3"><a href="#sec-8">4.1 MTBF与MTTR指标定义及当前配置情况</a></li>
+<li class="toc-l2"><a href="#sec-9">五、两实验RWS对比</a></li>
+<li class="toc-l2"><a href="#sec-10">六、保障系统与保障资源</a></li>
+<li class="toc-l2"><a href="#sec-11">七、保障活动与状态转移</a></li>
+<li class="toc-l3"><a href="#sec-12">7.1单LRU实验</a></li>
+<li class="toc-l3"><a href="#sec-13">7.2多LRU实验</a></li>
+<li class="toc-l2"><a href="#sec-14">八、单LRU与多LRU实验结果对比</a></li>
+<li class="toc-l3"><a href="#sec-15">8.1单LRU：seed=4</a></li>
+<li class="toc-l3"><a href="#sec-16">8.2多LRU：四次浏览器运行</a></li>
+<li class="toc-l3"><a href="#sec-17">8.3汇总对照</a></li>
+<li class="toc-l3"><a href="#sec-18">8.4MTBF与MTTR的运行统计情况</a></li>
+<li class="toc-l2"><a href="#sec-19">九、验证结果与能力边界</a></li>
+<li class="toc-l3"><a href="#sec-20">9.1已有证据支持</a></li>
+<li class="toc-l3"><a href="#sec-21">9.2尚未验证或不支持的范围</a></li>
+<li class="toc-l2"><a href="#sec-22">十、证据清单与复现信息</a></li>
+    </ul>
+  </nav>
+
+  <main>
+<h2 id="sec-2">一、实验目的</h2>
+<p>对比单一LRU基线案例（Case D）与三种LRU实验，评估Riffoid IR插件在装备故障建模、备件区分与消耗、维修活动、资源约束、仿真执行和证据复现方面的表现，并明确当前证据支持的能力边界。</p>
+<h2 id="sec-3">二、总体任务流程与仿真剖面</h2>
+<p>两个实验使用相近的任务时间框架，以便观察故障、维修、备件消耗与第二架次之间的关系。</p>
+<div class="table-wrap"><table>
+<tr><th><strong>项目</strong></th><th><strong>单LRU：Case D</strong></th><th><strong>多LRU：三类型实验</strong></th></tr>
+<tr><td><strong>装备</strong></td><td><strong>AC-01，型号/类型F35</strong></td><td><strong>AC-01；挂接三种LRU类型</strong></td></tr>
+<tr><td><strong>计划架次</strong></td><td><strong>第20分钟、第40分钟起飞；每架次计划10分钟</strong></td><td><strong>第20分钟、第40分钟起飞；每架次计划10分钟</strong></td></tr>
+<tr><td><strong>仿真停止</strong></td><td><strong>120分钟，按持续时间停止</strong></td><td><strong>120分钟，按持续时间停止</strong></td></tr>
+<tr><td><strong>故障后逻辑</strong></td><td><strong>飞行中LRU故障导致返场；当前架次不算正常完成</strong></td><td><strong>按组件故障触发返场/维修；观察具体LRU类型与匹配备件</strong></td></tr>
+<tr><td><strong>随机性</strong></td><td><strong>核心目标运行seed=4</strong></td><td><strong>四次浏览器运行：seed=4、8、22、1</strong></td></tr>
+</table></div>
+<h2 id="sec-4">三、装备系统与组成结构</h2>
+<h3 id="sec-5">3.1单LRU基线</h3>
+<p>装备为AC-01（F35），在AC-01-INSTALL/装备安装关系下配置LRU-01。LRU-01是本案例中明确建模的故障部件；故障参数作用于该部件，不应将其直接解释为整架飞机的整体可靠性指标。</p>
+<h3 id="sec-6">3.2多LRU实验</h3>
+<p>装备同样为AC-01（F35），安装关系下配置LRU-A、LRU-B、LRU-C三种类型最小可替换单元。三者分别具有不同的故障率、维修活动和匹配备件。本实验验证的是多类型部件的配置与运行行为，不等同于证明任意数量、任意拓扑的复杂装备树都已验证。</p>
+<div class="table-wrap"><table>
+<tr><th><strong>部件类型</strong></th><th><strong>故障率（每飞行小时）</strong></th><th><strong>维修时长</strong></th><th><strong>匹配备件</strong></th></tr>
+<tr><td><strong>LRU-A</strong></td><td><strong>2.0</strong></td><td><strong>8 分钟</strong></td><td><strong>SPARE-A</strong></td></tr>
+<tr><td><strong>LRU-B</strong></td><td><strong>1.5</strong></td><td><strong>12 分钟</strong></td><td><strong>SPARE-B</strong></td></tr>
+<tr><td><strong>LRU-C</strong></td><td><strong>1.0</strong></td><td><strong>15 分钟</strong></td><td><strong>SPARE-C</strong></td></tr>
+</table></div>
+<p>注：多LRU的REMOVE/FIT活动通过对应的设备/产品标识关联到具体部件和备件。实验结果中没有跨类型错用备件。</p>
+<h2 id="sec-7">四、质量特性与故障参数</h2>
+<div class="table-wrap"><table>
+<tr><th><strong>参数/指标</strong></th><th><strong>单LRU</strong><strong>实验</strong></th><th><strong>多LRU实验</strong></th></tr>
+<tr><td><strong>部件故障分布</strong></td><td><strong>指数分布</strong></td><td><strong>各 LRU 配置指数故障模型</strong></td></tr>
+<tr><td><strong>故障率</strong></td><td><strong>LRU-01：2.0/飞行小时</strong></td><td><strong>A：2.0；B：1.5；C：1.0/飞行小时</strong></td></tr>
+<tr><td><strong>维修时长</strong></td><td><strong>REMOVE 2分钟；FIT 8分钟</strong></td><td><strong>A/B/C对应维修时长分别为 8/12/15 分钟；REMOVE/FIT按配置活动执行</strong></td></tr>
+</table></div>
+<h3 id="sec-8">4.1 MTBF与MTTR指标定义及当前配置情况</h3>
+<p>本实验未在Business IR中直接配置MTBF、MTTR字段，而是通过LRU的故障分布、故障率、维修活动持续时间及备件约束描述装备故障与维修行为。</p>
+<p>（1）平均故障间隔时间（MTBF）</p>
+<p>本实验采用指数故障分布，并以飞行暴露时间推进故障时钟。对于故障率为\(\lambda\)的LRU，在指数分布假设下，其理论平均故障间隔为：</p>
+<p>$$MTBF=\frac{1}{\lambda}$$</p>
+<p>因此，单LRU实验中，LRU-01的故障率为2.0次/飞行小时，对应理论MTBF为0.5飞行小时，即30飞行分钟。</p>
+<p>多LRU实验中，LRU-A、LRU-B、LRU-C 的故障率分别为2.0、1.5、1.0次/飞行小时，对应理论 MTBF 分别为30、40、60飞行分钟。</p>
+<p>以上数值为根据输入故障率推导的理论值，不是由本轮有限次数的仿真运行估计得到的实测MTBF，也不代表飞机整体MTBF。</p>
+<p>（2）平均修复时间（MTTR）</p>
+<p>当前模型通过维修活动步骤持续时间及组件的repairTimeMinutes描述维修过程，没有直接配置MTTR参数。</p>
+<p>单LRU实验中，REMOVE持续2分钟、FIT持续8分钟，名义维修作业时间合计为10分钟。</p>
+<p>多LRU实验中，LRU-A、LRU-B、LRU-C 的REMOVE/FIT名义维修作业时间分别为10、14、17分钟。</p>
+<p>上述数值是配置的维修作业时长，不等同于实测MTTR。实际MTTR需要根据故障发生与维修完成事件统计，并明确是否包含等待人员、等待设备和等待备件的时间。因备件不足而未完成的维修应单独记录，不应作为完整维修时间直接纳入均值。</p>
+<p>本实验暂不报告飞机整体 MTBF、MTTR，也未将其作为正式验收指标。</p>
+<h2 id="sec-9">五、两实验RWS对比</h2>
+<div class="table-wrap"><table>
+<tr><th><strong>RMS类别</strong></th><th><strong>单LRU</strong><strong>实验</strong></th><th><strong>多LRU实验</strong></th></tr>
+<tr><td>Reliability<br>（可靠性）</td><td>LRU-01，故障率2.0次/飞行小时<br>理论MTBF30飞行分钟</td><td>LRU-A：2.0；理论MTBF为30飞行分钟<br>LRU-B：1.5；理论MTBF为40飞行分钟<br>LRU-C：1.0；理论MTBF为60飞行分钟</td></tr>
+<tr><td>Maintainability<br>（维修性）</td><td>REMOVE：2分钟；<br>FIT：8分钟；<br>名义作业时间10分钟</td><td>LRU-A：8分钟；名义作业时间10分钟<br>LRU-B：12分钟；名义作业时间14分钟<br>LRU-C：15分钟；名义作业时间17分钟</td></tr>
+<tr><td>Supportability<br>（保障性）</td><td>初始库存1件</td><td>SPARE-A、SPARE-B、SPARE-C各一件备件</td></tr>
+</table></div>
+<p>注：表中 MTBF 为根据指数故障率推导的理论值；维修时间为模型配置值。两个实验均未将实测 MTBF、实测 MTTR 或飞机整体可用度作为正式输出指标。</p>
+<h2 id="sec-10">六、保障系统与保障资源</h2>
+<div class="table-wrap"><table>
+<tr><th><strong>资源/规则</strong></th><th><strong>单LRU</strong><strong>实验</strong></th><th><strong>多LRU实验</strong></th></tr>
+<tr><td><strong>保障位置</strong></td><td><strong>BASE-01</strong></td><td><strong>BASE-01</strong></td></tr>
+<tr><td><strong>人员与设备</strong></td><td><strong>1名技术人员、1台地面车；相关活动按配置占用</strong></td><td><strong>1名技术人员、1台地面车；相关活动按配置占用</strong></td></tr>
+<tr><td><strong>初始备件</strong></td><td><strong>1件LRU-PART</strong></td><td><strong>SPARE-A、SPARE-B、SPARE-C 各1件</strong></td></tr>
+<tr><td><strong>库存扣减</strong></td><td><strong>FIT开始时扣减匹配备件</strong></td><td><strong>FIT开始时扣减对应类型备件</strong></td></tr>
+<tr><td><strong>库存不足</strong></td><td><strong>缺少备件时FIT无法开始，维修不能完成</strong></td><td><strong>对应类型备件不足时，不能用其他类型备件替代</strong></td></tr>
+</table></div>
+<h2 id="sec-11">七、保障活动与状态转移</h2>
+<h3 id="sec-12">7.1单LRU实验</h3>
+<ul>
+<li>任务前检查：计划起飞前10分钟开始，PRE活动持续3分钟，并占用1名人员和1台地面车。</li>
+<li>正常返场后检查：POST活动持续2分钟。</li>
+<li>故障维修：REMOVE持续2分钟；FIT持续8分钟，并要求1件LRU-PART。</li>
+<li>起飞约束：若计划起飞后5分钟内仍不能起飞，则取消该架次；第二架次按重新放行规则执行，不重复完整的首次任务前检查。</li>
+<li>故障后果：飞行中发生LRU故障会导致返场，当前架次不计为正常完成；维修成功后飞机恢复可用，故障计时重新开始。</li>
+</ul>
+<h3 id="sec-13">7.2多LRU实验</h3>
+<p>LRU-A/B/C分别关联对应的维修活动与备件产品标识。</p>
+<p>维修活动持续时间随LRU类型变化，不能把所有类型简化成同一维修时长。</p>
+<p>安装活动消耗对应类型的备件；其他类型的库存不能满足当前FIT的备件需求。</p>
+<p>若对应备件耗尽，FIT无法开始，维修不能完成，飞机不会因为一次未完成的维修而被错误地标记为已恢复可用。</p>
+<h2 id="sec-14">八、单LRU与多LRU实验结果对比</h2>
+<h3 id="sec-15">8.1单LRU：seed=4</h3>
+<div class="table-wrap"><table>
+<tr><th><strong>仿真时间</strong></th><th><strong>实际事件</strong></th><th><strong>库存/状态结果</strong></th></tr>
+<tr><td><strong>第20分钟</strong></td><td><strong>第一架次实际起飞</strong></td><td><strong>AC-01进入任务执行</strong></td></tr>
+<tr><td><strong>第</strong><strong>2</strong><strong>9分钟</strong></td><td><strong>LRU-01故障；异常结束当前架次并返场</strong></td><td><strong>架次未正常完成</strong></td></tr>
+<tr><td><strong>第29–31分钟</strong></td><td><strong>REMOVE</strong></td><td><strong>拆卸活动完成</strong></td></tr>
+<tr><td><strong>第31–39分钟</strong></td><td><strong>FIT</strong></td><td><strong>消耗1件LRU-PART，库存1→0；维修完成，飞机恢复可用</strong></td></tr>
+<tr><td><strong>第40分钟</strong></td><td><strong>第二架次起飞</strong></td><td><strong>AC-0</strong><strong>1</strong><strong>再次执行任务</strong></td></tr>
+<tr><td><strong>第44分钟</strong></td><td><strong>LRU-01再次故障并返场</strong></td><td><strong>进入维修流程</strong></td></tr>
+<tr><td><strong>第44–46分钟</strong></td><td><strong>REMOVE</strong></td><td><strong>拆卸活动完成</strong></td></tr>
+<tr><td><strong>第46分钟以后至120分钟</strong></td><td><strong>FIT因库存为0而无法开始</strong></td><td><strong>维修未完成；飞机保持maintenance状态直至仿真结束</strong></td></tr>
+</table></div>
+<p>核心结论：单LRU案例呈现了“首次故障—成功换件—库存耗尽—再次故障—维修受备件短缺阻塞”的完整链条。本次运行中第二架次也未能正常完成。</p>
+<h3 id="sec-16">8.2多LRU：四次浏览器运行</h3>
+<div class="table-wrap"><table>
+<tr><th><strong>Seed / Run ID</strong></th><th><strong>故障顺序</strong></th><th><strong>消耗备件</strong></th><th><strong>终态库存 A/B/C</strong></th><th><strong>终态</strong></th></tr>
+<tr><td><strong>4</strong></td><td><strong>LRU-B→ LRU-A</strong></td><td><strong>SPARE-B → SPARE-A</strong></td><td><strong>0/0/1</strong></td><td><strong>available；46events</strong></td></tr>
+<tr><td><strong>8</strong></td><td><strong>LRU-A→ LRU-C</strong></td><td><strong>SPARE-A → SPARE-C</strong></td><td><strong>0/1/ 0</strong></td><td><strong>available；46events</strong></td></tr>
+<tr><td><strong>22</strong></td><td><strong>LRU-C→ LRU-B</strong></td><td><strong>SPARE-C → SPARE-B</strong></td><td><strong>1/0/0</strong></td><td><strong>available；46events</strong></td></tr>
+<tr><td><strong>1</strong></td><td><strong>LRU-A→ LRU-A</strong></td><td><strong>首次消耗SPARE-A；第二次A故障缺件</strong></td><td><strong>0/1/1</strong></td><td><strong>Maintenance</strong><strong>；</strong><strong>37events</strong></td></tr>
+</table></div>
+<p>四次运行均成功执行；浏览器运行与离线回放及CPython参考结果在本轮检查范围内达到4/4一致。前三次运行各发生两种类型故障并成功使用各自备件，终态飞机可用；seed=1复现同一种LRU-A再次故障且SPARE-A耗尽，维修受阻，飞机终态为maintenance。</p>
+<h3 id="sec-17">8.3汇总对照</h3>
+<div class="table-wrap"><table>
+<tr><th><strong>比较维度</strong></th><th><strong>单LRU</strong><strong>实验</strong></th><th><strong>多LRU实验</strong></th><th><strong>结论</strong></th></tr>
+<tr><td><strong>故障类型</strong></td><td><strong>单一LRU-01</strong></td><td><strong>三种LRU-A/B/C</strong></td><td><strong>多类型结构已实际运行</strong></td></tr>
+<tr><td><strong>故障率差异</strong></td><td><strong>一个故障率参数</strong></td><td><strong>三种不同故障率</strong></td><td><strong>本轮配置与运行路径支持类型差异化参数</strong></td></tr>
+<tr><td><strong>维修时长</strong></td><td><strong>固定REMOVE/FIT基线</strong></td><td><strong>不同类型配置不同维修时长</strong></td><td><strong>模型能表达差异；整机MTTR尚未计算</strong></td></tr>
+<tr><td><strong>备件管理</strong></td><td><strong>单种备件，库存1</strong></td><td><strong>三种独立匹配备件，各1件</strong></td><td><strong>未观察到跨类型替代或错扣</strong></td></tr>
+<tr><td><strong>库存耗尽</strong></td><td><strong>第二次故障后缺件</strong></td><td><strong>seed=1复现A类备件耗尽</strong></td><td><strong>两类实验都观察到短缺阻止维修完成</strong></td></tr>
+<tr><td><strong>终态</strong></td><td><strong>库存耗尽后maintenance</strong></td><td><strong>3次available，1次 maintenance</strong></td><td><strong>终态与库存/维修事件相符</strong></td></tr>
+<tr><td><strong>证据交叉核对</strong></td><td><strong>目标运行有事件时间线与终态记录</strong></td><td><strong>4次浏览器运行与离线/参考结果4/4对齐</strong></td><td><strong>多LRU本轮具有明确的复现证据</strong></td></tr>
+</table></div>
+<h3 id="sec-18">8.4MTBF与MTTR的运行统计情况</h3>
+<p>本轮仿真结果尚未直接输出MTBF、MTTR指标，但浏览器事件日志包含部件故障、维修步骤开始与完成、维修完成、备件消耗及备件短缺等事件，可作为后续计算相关指标的数据基础。</p>
+<p>MTBF方面： 当前实验使用指数故障分布，理论MTBF可由输入故障率计算。由于现有运行种子主要用于验证特定故障、维修和库存短缺路径，且运行暴露时间有限，不将这些运行样本直接作为无偏的 MTBF 估计。</p>
+<p>MTTR方面： 对于已完成维修的故障，可根据component_failed与对应的repair_completed事件计算故障至修复完成的时间，并进一步区分维修作业时间、资源等待时间和备件等待时间。对于因备件短缺而未完成维修的情况，应记录为未完成维修或右删失样本，不纳入完整维修时间的简单平均值。</p>
+<p>因此，本轮实验已验证部分故障与维修行为，但尚未形成正式的实测MTBF、MTTR统计结果。相关指标需要在明确统计口径后，对完整运行事件进行统一汇总。</p>
+<h2 id="sec-19">九、验证结果与能力边界</h2>
+<h3 id="sec-20">9.1已有证据支持</h3>
+<ul>
+<li>单LRU故障、返场、拆卸、换件、备件扣减和库存耗尽后的维修阻塞。</li>
+<li>多种LRU类型的建模与执行；不同故障率、维修活动时长和备件产品标识可分别配置。</li>
+<li>匹配备件按类型扣减；未观察到跨类型备件替代。</li>
+<li>备件短缺时 FIT/维修不能完成，终态保持maintenance，而不是虚假恢复可用。</li>
+<li>多LRU四次浏览器运行与离线回放及CPython参考结果在已检查的事件序列、事件数量、库存和终态范围内 4/4 一致。</li>
+<li>默认GC-01模型未被覆盖；实验模型与运行证据放在独立目录。</li>
+</ul>
+<h3 id="sec-21">9.2尚未验证或不支持的范围</h3>
+<p>并发故障与故障隔离：本轮四次多LRU运行中的第二次故障都发生在第一次维修完成后，不能据此证明同时存在多个活动故障时的处理正确。</p>
+<p>三种LRU在同一次运行中全部发生故障：本轮四次运行未观察到，不能把未出现解释为已验证支持或已证明不可能。</p>
+<p>维修分支可能清空组件故障集合（componentFailures）的风险路径尚未通过并发故障场景验证；需单独设计测试。</p>
+<p>备件返库、补给链、supply_routes、维修后库存增加：当前实验没有验证；supply_routes 在能力检查阶段被拒绝。</p>
+<p>部分更换、replacement_ratio不等于1.0、多飞机任务等超出本次验证范围；不得从当前结果推断其已支持。</p>
+<p>系统级可靠性、MTBF、MTTR、可用度目标与置信区间未作为正式验收指标配置或统计。</p>
+<h2 id="sec-22">十、证据清单与复现信息</h2>
+<p>多LRU实验目录：</p>
+<div class="table-wrap"><table>
+<tr><th><strong>证据文件/标识</strong></th><th><strong>用途</strong></th></tr>
+<tr><td><strong>14-browser-runs/ 各run目录</strong></td><td><strong>每次浏览器运行的 record.json、events.jsonl、metrics.json、terminal-state.json、timeline.txt</strong></td></tr>
+<tr><td><strong>14-browser-runs/MANIFEST.json</strong></td><td><strong>本轮新增证据的哈希清单</strong></td></tr>
+<tr><td><strong>15-browser-vs-offline-parity.json</strong></td><td><strong>浏览器运行与离线/参考运行一致性检查</strong></td></tr>
+<tr><td><strong>16-browser-inventory-and-isolation.json</strong></td><td><strong>库存变化与类型隔离检查</strong></td></tr>
+<tr><td><strong>17-browser-run-summary.csv</strong></td><td><strong>四次运行汇总表</strong></td></tr>
+<tr><td><strong>18-continuation-acceptance-report.md</strong></td><td><strong>多 LRU 续跑验收报告</strong></td></tr>
+<tr><td><strong>单LRU</strong><strong>实验</strong></td><td><strong>run-26f16c2a-471e-45d0-b476-a480ce2e9a54；seed=4</strong></td></tr>
+</table></div>
+<p>多LRU模型标识：draft SHA-256前缀78de2aa5…；sealed fingerprint前缀bf30a950…；artifact前缀0590421d…；planFp前缀53fadc9f…；bundle前缀99f765a2…；runtime前缀096bba40…。</p>
+<p>配置与产物核对记录显示，bundle manifest中的plan指纹匹配；默认模型 model/business-ir.draft.json与model/business-ir.json的已记录哈希保持不变。以上前缀用于定位实验版本，不替代完整哈希清单。</p>
+  </main>
+</div>
+
+<footer>
+  单一LUR与多种LRU场景对比实验报告 · 由 Word 实验报告转换生成 · 2026-10-27
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function renderMath() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.querySelector("main"), {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ]
+      });
+    } else { setTimeout(renderMath, 300); }
+  }
+  renderMath();
+
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+  var current = null;
+  function onScroll() {
+    var best = null;
+    document.querySelectorAll("main h2[id], main h3[id]").forEach(function (h) {
+      if (h.getBoundingClientRect().top <= 100) best = h;
+    });
+    links.forEach(function (a) { a.classList.remove("active"); });
+    if (best && byId[best.id]) { byId[best.id].classList.add("active"); current = best.id; }
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+});
+</script>
+</body>
+</html>

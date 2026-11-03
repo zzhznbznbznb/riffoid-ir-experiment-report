@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Riffoid IR Plugin 基础任务与架次调度能力综合实验报告，覆盖五个 Golden Chain 案例。">
+<title>Riffoid IR Plugin｜JHG-84 综合实验报告</title>
+<style>
+:root{--bg:#f4f6fa;--paper:#fff;--ink:#172033;--muted:#667085;--line:#e5e9f0;--blue:#2457a7;--blue2:#eaf1fb;--shadow:0 8px 30px rgba(20,35,65,.06)}
+*{box-sizing:border-box} html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.78 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif}
+header{background:linear-gradient(135deg,#101d35,#1e3e6d 70%,#315d91);color:#fff;padding:54px 24px 46px}
+.hero{max-width:1180px;margin:auto} .eyebrow{font-size:12px;letter-spacing:.16em;color:#c4d6f2;font-weight:700}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.25;margin:14px 0 16px;max-width:850px}
+.subtitle{color:#d5e1f2;max-width:800px;margin:0;font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px} .meta span{border:1px solid #ffffff3d;background:#ffffff14;padding:6px 11px;border-radius:7px;font-size:12px;color:#eef4ff}
+.layout{max-width:1180px;margin:30px auto;padding:0 20px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;align-items:start}
+nav{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 14px;box-shadow:var(--shadow)}
+nav h2{font-size:13px;margin:0 8px 12px;color:#344054} nav a{display:block;text-decoration:none;color:#596579;font-size:12px;line-height:1.5;padding:6px 8px;border-radius:6px}
+nav a:hover{background:var(--blue2);color:var(--blue)} nav .toc-level-1{font-weight:700;color:#27364d;margin-top:4px} nav .toc-level-2{padding-left:17px} nav .toc-level-3{padding-left:27px;font-size:11px}
+main{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:clamp(22px,4vw,48px);box-shadow:var(--shadow);min-width:0}
+main h1,main h2,main h3{color:#182b49;line-height:1.4;scroll-margin-top:20px} main h1{font-size:28px;border-bottom:2px solid var(--line);padding-bottom:15px}
+main h2{font-size:22px;margin:38px 0 14px;padding-left:13px;border-left:4px solid var(--blue)} main h3{font-size:17px;margin:28px 0 10px}
+p{margin:10px 0 15px} strong{color:#172d50} .table-wrap{overflow-x:auto;margin:18px 0 24px;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.6;min-width:520px} th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:#f0f4fa;color:#263d60;font-weight:700} tr:last-child td{border-bottom:0} tr:nth-child(even) td{background:#fbfcfe}
+ul,ol{padding-left:25px;margin:10px 0 18px} li{padding-left:3px;margin:5px 0}
+code{background:#f1f4f8;padding:2px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:.9em;overflow-wrap:anywhere}
+footer{max-width:1180px;margin:0 auto;padding:0 20px 35px;color:var(--muted);font-size:12px;text-align:center}
+.toplink{position:fixed;right:20px;bottom:20px;background:#1e3e6d;color:white;text-decoration:none;border-radius:24px;padding:9px 14px;font-size:12px;box-shadow:var(--shadow)}
+@media(max-width:850px){.layout{grid-template-columns:1fr;margin-top:16px}nav{position:relative;top:auto;max-height:300px}main{padding:22px 18px}header{padding:38px 20px}}
+@media print{body{background:white}header{background:#18345c!important;print-color-adjust:exact}.layout{display:block;margin:0;max-width:none}nav,.toplink{display:none}main{border:0;box-shadow:none;padding:15px}footer{display:none}}
+</style></head><body>
+<header id="top"><div class="hero"><div class="eyebrow">RIFFOID IR PLUGIN · EXPERIMENT REPORT</div>
+<h1>基础任务与架次调度能力<br>综合实验报告</h1>
+<p class="subtitle">JHG-84｜基于五个 Golden Chain 案例的功能验证与能力边界调查</p>
+<div class="meta"><span>GC-01-A01</span><span>GC-02-A02</span><span>GC-03-A03</span><span>GC-12-A12</span><span>GC-13-A13</span><span>Pi Web · Riffoid IR Plugin</span></div>
+</div></header>
+<div class="layout"><nav aria-label="报告目录"><h2>报告目录</h2><a class="toc-level-1" href="#section-1">Riffoid IR Plugin基础任务与架次调度能力综合实验</a>
+<a class="toc-level-2" href="#section-2">实验背景与目标</a>
+<a class="toc-level-3" href="#section-3">1.1实验案例</a>
+<a class="toc-level-3" href="#section-4">1.2统一验证流程</a>
+<a class="toc-level-2" href="#section-5">五个实验的具体结果</a>
+<a class="toc-level-3" href="#section-6">2.1 GC-01-A01：单飞机、单任务</a>
+<a class="toc-level-3" href="#section-7">2.2 GC-02-A02：单飞机连续执行多个架次</a>
+<a class="toc-level-3" href="#section-8">2.3 GC-03-A03：双飞机编队任务</a>
+<a class="toc-level-3" href="#section-9">2.4 GC-12-A12：同时发生的任务优先级竞争</a>
+<a class="toc-level-3" href="#section-10">2.5 GC-13-A13：任务开始依赖关系</a>
+<a class="toc-level-2" href="#section-11">五个实验的综合结果</a>
+<a class="toc-level-3" href="#section-12">3.1实验阶段对比</a>
+<a class="toc-level-3" href="#section-13">3.2已验证的能力</a>
+<a class="toc-level-3" href="#section-14">3.3已确认的能力缺口</a>
+<a class="toc-level-3" href="#section-15">3.4当前能力边界</a>
+<a class="toc-level-2" href="#section-16">问题的技术层级分析</a>
+<a class="toc-level-3" href="#section-17">4.1 Business IR 层</a>
+<a class="toc-level-3" href="#section-18">4.2 Core IR / Plan IR 层</a>
+<a class="toc-level-3" href="#section-19">4.3 Compiler 层</a>
+<a class="toc-level-3" href="#section-20">4.4 Browser Runtime 层</a>
+<a class="toc-level-3" href="#section-21">4.5 Result / Oracle 验证层</a>
+<a class="toc-level-2" href="#section-22">后续改进方向</a>
+<a class="toc-level-3" href="#section-23">5.1 多飞机与多机型联合任务能力</a>
+<a class="toc-level-3" href="#section-24">5.2 任务级依赖能力</a>
+<a class="toc-level-3" href="#section-25">5.3 周期状态采样能力</a>
+<a class="toc-level-3" href="#section-26">5.4 任务事件与状态可观测性</a>
+<a class="toc-level-3" href="#section-27">5.5 优先级与延迟机制</a>
+<a class="toc-level-3" href="#section-28">5.6 Oracle与跨实现验证</a>
+<a class="toc-level-2" href="#section-29">七、综合实验结论</a>
+<a class="toc-level-2" href="#section-30">实验记录索引</a></nav><main><h1 id="section-1">Riffoid IR Plugin基础任务与架次调度能力综合实验</h1>
+<p>实验范围：GC-01-A01、GC-02-A02、GC-03-A03、GC-12-A12、GC-13-A13</p>
+<p>实验环境：Pi Web + Riffoid IR Plugin + Compiler + Aircraft Support Domain Pack + Browser Runtime</p>
+<p>实验性质：基于案例库的功能验证与能力边界调查</p>
+<h2 id="section-2">实验背景与目标</h2>
+<p>本次实验旨在验证Pi Web中的Riffoid IR Plugin能否根据自然语言业务需求建立Business IR模型，并通过模型检查、编译和浏览器仿真执行，完成从业务需求描述到仿真结果输出的基本流程。</p>
+<p>实验以案例库中的五个Golden Chain案例为依据，逐步增加任务调度复杂度，考察插件在以下方面的能力：</p>
+<p>基础任务建模与单飞机任务执行。</p>
+<p>单飞机连续执行多个架次。</p>
+<p>多飞机共同参与同一个编队任务。</p>
+<p>多任务同时竞争有限飞机资源时的优先级调度。</p>
+<p>具有前置依赖关系的任务调度与执行门控。</p>
+<p>通过五个案例，进一步识别当前插件在Business IR表达、Compiler转换、Browser Runtime执行以及Result结果观测方面的能力边界。</p>
+<h3 id="section-3">1.1实验案例</h3>
+<div class="table-wrap"><table><tr><th>案例</th><th>实验场景</th><th>核心验证目标</th></tr><tr><td>GC-01-A01</td><td>单飞机、单任务</td><td>基础任务建模与执行</td></tr><tr><td>GC-02-A02</td><td>单飞机、多个架次</td><td>连续架次调度及航后保障</td></tr><tr><td>GC-03-A03</td><td>双飞机编队</td><td>多飞机联合任务执行</td></tr><tr><td>GC-12-A12</td><td>同时发生的任务竞争</td><td>优先级与稀缺资源分配</td></tr><tr><td>GC-13-A13</td><td>任务开始依赖关系</td><td>任务前置依赖与执行门控</td></tr></table></div>
+<h3 id="section-4">1.2统一验证流程</h3>
+<p>每个案例按照以下流程开展：</p>
+<p>阅读案例需求、输入参数、Oracle和相关参考文件。</p>
+<p>将自然语言需求转换为Business IR。</p>
+<p>执行Business IR Check，检查模型结构及语义。</p>
+<p>执行Compile，生成Plan和浏览器执行工件。</p>
+<p>在Browser Runtime中执行仿真。</p>
+<p>获取Result、Run Record、Event Log和相关统计数据。</p>
+<p>对照案例预期结果及Oracle进行验证。</p>
+<p>记录实际能力、执行限制和后续改进方向。</p>
+<p>需要说明：并非所有案例都能完成全部执行阶段。对于当前执行链不支持的功能，保留能力检查结果，不通过修改输入或使用未经支持的字段伪造实验结果。</p>
+<h2 id="section-5">五个实验的具体结果</h2>
+<h3 id="section-6">2.1 GC-01-A01：单飞机、单任务</h3>
+<p>实验目标：</p>
+<p>验证插件能否根据自然语言需求建立一个最基本的航空任务调度模型，并完成 Business IR 检查、编译、仿真运行和结果核验。</p>
+<p>实验场景：</p>
+<p>基地：BASE-01。</p>
+<p>飞机：1架TEACH-AIR-01。</p>
+<p>任务：1个架次。</p>
+<p>计划起飞时间：仿真开始后第8小时。</p>
+<p>飞行持续时间：120分钟。</p>
+<p>提前通知时间：60分钟。</p>
+<p>最大延迟时间：20分钟。</p>
+<p>仿真时域：36小时。</p>
+<p>状态采样要求：每 30分钟一次。</p>
+<p>不考虑随机故障、维修、备件和其他保障资源限制。</p>
+<p>实验结果：</p>
+<p>Business IR Check：通过。</p>
+<p>Compile：成功。</p>
+<p>Browser Run：成功。</p>
+<p>Result：成功获取。</p>
+<p>实际起飞时间：第8小时。</p>
+<p>实际返航时间：第10小时。</p>
+<p>第7小时进入航前准备阶段。</p>
+<p>完成架次：1。</p>
+<p>取消：0。</p>
+<p>延迟：0。</p>
+<p>故障：0。</p>
+<p>Oracle对照结果：</p>
+<div class="table-wrap"><table><tr><th>判定</th><th>数量</th></tr><tr><td>PASS</td><td>8</td></tr><tr><td>PARTIAL</td><td>1</td></tr><tr><td>UNDETERMINED</td><td>6</td></tr><tr><td>FAIL</td><td>0</td></tr><tr><td>合计</td><td>15</td></tr></table></div>
+<p>主要发现：</p>
+<p>基础任务的自然语言建模、检查、编译和执行链路能够正常完成。</p>
+<p>30分钟周期状态采样字段没有进入最终Plan，Runtime 没有输出实际周期状态帧。</p>
+<p>缺少独立的mission_notice事件，不能直接通过原生事件证明提前通知行为。</p>
+<p>20分钟最大延迟边界没有被触发，尚未验证边界行为。</p>
+<p>unfinished_waves、flight_hours、ready_hours、assigned_hours、reserved_hours和terminal_active_jobs六项指标缺少直接输出证据。</p>
+<p>当前Browser Runtime与标准案例参考执行链在时间单位、事件词表和指标选择器等方面存在契约差异。</p>
+<p>实验结论：</p>
+<p>GC-01-A01初步验证了插件从自然语言建模到浏览器仿真执行的基础能力。但周期状态采样、通知事件、延迟边界和部分 Oracle 指标仍存在不足。</p>
+<p>总体判定：部分通过。</p>
+<h3 id="section-7">2.2 GC-02-A02：单飞机连续执行多个架次</h3>
+<p>实验目标：</p>
+<p>验证插件能否支持同一架飞机连续执行多个架次，并正确处理架次之间的任务调度、返航和航后保障活动。</p>
+<p>实验场景：</p>
+<p>采用单飞机连续执行三个架次的场景，重点检查：</p>
+<p>三个架次是否按照计划执行。</p>
+<p>是否使用同一架飞机。</p>
+<p>起飞和返航时间是否符合预期。</p>
+<p>架次之间的航后作业是否正确完成。</p>
+<p>飞机是否能够恢复并继续执行后续架次。</p>
+<p>实验结果：</p>
+<p>Business IR建模：完成。</p>
+<p>Check：通过。</p>
+<p>Compile：成功。</p>
+<p>Browser Run：成功。</p>
+<p>Oracle验证：完成。</p>
+<p>Oracle验证结果：</p>
+<div class="table-wrap"><table><tr><th>判定</th><th>数量</th></tr><tr><td>PASS</td><td>8</td></tr><tr><td>PARTIAL</td><td>1</td></tr><tr><td>UNDETERMINED</td><td>6</td></tr><tr><td>FAIL</td><td>0</td></tr><tr><td>合计</td><td>15</td></tr></table></div>
+<p>三个架次均按照计划完成，起飞和返航时间符合预期，均由同一架飞机执行，没有发生取消或延迟。</p>
+<p>主要发现：</p>
+<p>连续架次调度能力已得到验证： 同一架飞机可以连续执行多个架次。</p>
+<p>30 分钟周期状态采样仍未实现：Business IR中声明的sample_every_minutes=30没有进入Plan，Runtime也没有生成原始状态帧。</p>
+<p>预约和通知语义无法区分：当前通知发生时飞机即被预留，缺少独立的预约字段和预约事件。</p>
+<p>航后事件存在异常：第一架次返航后没有独立的postflight_completed事件，相关航后作业被推迟到第二架次返航时完成，且事件归属第二架次。</p>
+<p>运行指标输出不足：多项Oracle指标只能通过事件和时间线事后派生计算，缺少直接输出证据。</p>
+<p>任务完成和飞机恢复可用的状态表达仍不够细化：需要进一步明确返航、任务完成、航后作业和恢复可用之间的关系。</p>
+<p>实验结论：</p>
+<p>GC-02-A02 验证了插件能够支持单飞机连续执行多个架次，说明其基础任务调度能力不局限于单次任务。但在多架次之间的航后保障事件归属、状态采样、预约通知语义和运行指标观测方面仍存在不足。</p>
+<p>总体判定：基础架次调度通过，部分Oracle项目无法判定。</p>
+<h3 id="section-8">2.3 GC-03-A03：双飞机编队任务</h3>
+<p>实验目标：</p>
+<p>验证插件能否表达一个由两架独立飞机共同参与的编队任务，并分别追踪两架飞机的分配、起飞和任务完成情况</p>
+<p>实验场景：</p>
+<p>基地：BASE-01。</p>
+<p>飞机：两架独立的TEACH-AIR-01飞机。</p>
+<p>任务：一个编队任务波次。</p>
+<p>计划执行时间：仿真开始后第8小时。</p>
+<p>任务持续时间：120分钟。</p>
+<p>提前通知时间：60分钟。</p>
+<p>计划参与数量：2。</p>
+<p>最低起飞数量：2。</p>
+<p>实验结果：</p>
+<p>Business IR建模：完成。</p>
+<p>Check：通过。</p>
+<p>Compiler Inspection：valid。</p>
+<p>Browser Capability：拒绝。</p>
+<p>Compile：失败。</p>
+<p>Browser Run：未执行。</p>
+<p>Oracle验证：未执行。</p>
+<p>Business IR Check：</p>
+<p>状态：passed</p>
+<p>diagnostics：[]</p>
+<p>Compiler阶段返回的主要诊断：</p>
+<p>code: unsupported_browser_plan</p>
+<p>stage: browser-capability</p>
+<p>path: plan.missions[0]</p>
+<p>message:</p>
+<p>Single-aircraft missions with valid integer minute timing required</p>
+<p>当前Browser Capability明确存在以下限制：</p>
+<p>multi-aircraft mission waves：未实现。</p>
+<p>per-tail sortie assignment：未实现。</p>
+<p>bounds.aircraftPerMission = 1：每个任务最多支持一架飞机。</p>
+<p>主要发现：</p>
+<p>Business IR能够表达两架飞机及编队任务的基本数量需求。</p>
+<p>结构检查通过不代表底层执行链支持多飞机联合任务。</p>
+<p>Compiler Inspection本身有效，但Browser Capability检查拒绝了多飞机任务计划。</p>
+<p>Compile失败后没有生成可运行的 Plan 包、.simpack或浏览器执行工件。</p>
+<p>因此没有实际双飞机编队运行结果，也没有逐飞机事件证据。</p>
+<p>实验结论：</p>
+<p>GC-03-A03 确认了当前系统在多飞机编队任务方面的能力边界。当前 Business IR 可以描述编队任务的基本需求，但 Browser Runtime 执行链仍然限制每个任务最多使用一架飞机。</p>
+<p>总体判定：模型表达通过，编译阶段受能力限制，实际执行未验证。</p>
+<h3 id="section-9">2.4 GC-12-A12：同时发生的任务优先级竞争</h3>
+<p>实验目标：</p>
+<p>验证插件能否在多飞机、多机型资源竞争场景中，根据任务优先级影响稀缺飞机资源的分配结果。</p>
+<p>本次采用两组对照实验，仅交换两个任务的优先级，其他业务参数保持一致。</p>
+<p>实验场景：</p>
+<p>两架 A 型飞机。</p>
+<p>一架 B 型飞机。</p>
+<p>两项任务均计划在第 8 小时起飞。</p>
+<p>提前通知时间：60 分钟。</p>
+<p>每项任务需要一架 A 型飞机和一架 B 型飞机。</p>
+<p>每架飞机准备时间：30 分钟。</p>
+<p>任务持续时间：120 分钟。</p>
+<p>B 型飞机只有一架，两个任务无法同时获得完整的 A+B 资源。</p>
+<p>实验结果：</p>
+<p>两组 Business IR：</p>
+<p>Check：均通过。</p>
+<p>Compile：均成功。</p>
+<p>Browser Run：均成功。</p>
+<p>Result：均完成只读核验。</p>
+<p>两组模型仅有两个 priority 字段不同。</p>
+<div class="table-wrap"><table><tr><th>阶段</th><th>基线组</th><th>优先交换组</th></tr><tr><td>获得A+B资源的任务</td><td>任务1</td><td>任务2</td></tr><tr><td>未获得B型飞机的任务</td><td>任务2</td><td>任务1</td></tr><tr><td>完整资源准备完成</td><td>450分钟</td><td>450分钟</td></tr><tr><td>完整任务起飞</td><td>480分钟</td><td>480分钟</td></tr><tr><td>完整任务返航</td><td>600分钟</td><td>600分钟</td></tr><tr><td>未获得B型飞机的单机任务取消</td><td>500分钟</td><td>500分钟</td></tr></table></div>
+<p>两组运行均为39条事件。</p>
+<p>两组原生统计一致：</p>
+<div class="table-wrap"><table><tr><th>指标</th><th>数量</th></tr><tr><td>Planed</td><td>4</td></tr><tr><td>launched</td><td>3</td></tr><tr><td>completed</td><td>3</td></tr><tr><td>cancelled</td><td>1</td></tr><tr><td>delayed</td><td>1</td></tr></table></div>
+<p>需要注意：上述统计针对拆分后的单机任务，不代表三个完整的A+B编队任务。</p>
+<p>主要发现：</p>
+<p>优先级交换能够改变稀缺B型飞机的分配对象。</p>
+<p>当前优先级主要影响Compiler编译阶段的Plan任务排序。</p>
+<p>Runtime按照Plan数组顺序进行资源分配，不是运行时动态比较优先级。</p>
+<p>当前系统不能原生表达一个任务必须同时获得A型和B型飞机才能执行。</p>
+<p>未获得B型飞机的任务，其A型单机任务仍然可以独立起飞。</p>
+<p>缺少完整编队起飞门控、部分资源分配状态和等待原因记录。</p>
+<p>本地执行链在500分钟取消，而上游参考行为涉及470分钟的最晚可行准备开始时间，存在30分钟差异。</p>
+<p>Result缺少完整的逐任务状态、终止原因和编队状态结构。</p>
+<p>候选Oracle映射比较：</p>
+<p>8项派生结果一致。</p>
+<p>4项派生结果不一致。</p>
+<p>但案例库当前仍为candidate状态，human_approval=null，且 cross_implementation=blocked_pairing_adapter_missing。因此，不能将候选映射比较结果视为正式 Oracle 验收或跨引擎一致性通过。</p>
+<p>实验结论：</p>
+<p>GC-12-A12 验证了当前插件能够通过优先级排序影响稀缺飞机资源的分配结果。但当前执行链不支持完整的多机型联合任务约束，无法保证所有必要飞机全部到位后才允许任务起飞。</p>
+<p>总体判定：优先级影响资源分配的能力通过验证，多机型完整编队调度能力存在明确缺口。</p>
+<h3 id="section-10">2.5 GC-13-A13：任务开始依赖关系</h3>
+<p>实验目标：</p>
+<p>验证插件能否通过自然语言建立任务之间的前置依赖关系，并区分飞机提前分配与任务实际开始之间的关系。</p>
+<p>本次实验采用无依赖组和有依赖组进行对照设计。</p>
+<p>实验场景：</p>
+<p>在同一个单位部署两架TEACH-AIR-01飞机，建立两个任务：</p>
+<div class="table-wrap"><table><tr><th>参数</th><th>RECON</th><th>FOLLOW</th></tr><tr><td>计划开始时间</td><td>第8小时</td><td>第10小时</td></tr><tr><td>持续时间</td><td>4小时</td><td>2小时</td></tr><tr><td>最大延迟</td><td>4小时</td><td>4小时</td></tr></table></div>
+<p>提前通知时间：60分钟。</p>
+<p>两组模型：</p>
+<p>无依赖组：RECON与FOLLOW独立执行。</p>
+<p>有依赖组：FOLLOW必须等待RECON完成并返航后才能开始，但允许提前获得飞机分配。</p>
+<p>另外，需求要求每30分钟记录一次状态。</p>
+<p>实验结果：</p>
+<p>无依赖组：</p>
+<p>Business IR Check：通过。</p>
+<p>Compile：成功。</p>
+<p>Browser Run：成功。</p>
+<p>Result：成功获取。</p>
+<p>实际执行结果：</p>
+<div class="table-wrap"><table><tr><th>任务</th><th>飞机</th><th>分配时间</th><th>起飞时间</th><th>返航时间</th></tr><tr><td>RECON</td><td>AC-01</td><td>第7小时</td><td>第8小时</td><td>第12小时</td></tr><tr><td>FOLLOW</td><td>AC-02</td><td>第9小时</td><td>第10小时</td><td>第12小时</td></tr></table></div>
+<p>两项任务均按计划完成。</p>
+<p>提前通知和飞机分配时间在Plan与原生事件记录中保持一致。</p>
+<p>运行标识：</p>
+<p>run-5432cfe8-81f3-4acb-9cca-13622e1170c5</p>
+<p>Result核验：</p>
+<p>Result与Run Record字节一致。</p>
+<p>21条事件逐条一致。</p>
+<p>20项原生统计指标全部一致。</p>
+<p>未发现数据差异。</p>
+<p>有依赖组：</p>
+<p>完成只读能力调查，但没有执行仿真。原因是当前Business IR、Compiler、Plan IR和Browser Runtime均缺少合法的任务级依赖表达与执行门控。</p>
+<p>主要发现：</p>
+<p>当前系统能够区分提前分配与实际起飞时间。</p>
+<p>无依赖组能够按照计划执行两项独立任务。</p>
+<p>当前Business IR没有正式定义任务级depends_on字段。</p>
+<p>Compiler lowering不会将未经支持的依赖信息转换到Plan。</p>
+<p>Plan IR的MissionSpec没有对应依赖属性。</p>
+<p>Browser Runtime没有前置任务完成后的派发门控。</p>
+<p>单纯调整priority不能代替任务依赖。</p>
+<p>有依赖组与无依赖组的V2模型完全相同，SHA-256均为：dd22ff099fa603accfa9bff6a8543d791be9a8973f86c0544de62ec85237a5bb</p>
+<p>因此不能将相同模型作为不同依赖语义的有效对照输入。另外，30分钟周期状态采样仍未实现，Result没有周期状态帧，也没有完整的任务级过程状态结构。</p>
+<p>实验结论：</p>
+<p>GC-13-A13验证了当前系统能够支持独立任务的计划执行、提前分配和实际起飞时间控制。</p>
+<p>但尚不能支持任务级前置依赖，也无法保证FOLLOW必须等待RECON完成并返航后才开始。</p>
+<p>总体判定：无依赖组通过本地执行链验证，有依赖组确认受到当前系统能力限制，整体部分通过。</p>
+<h2 id="section-11">五个实验的综合结果</h2>
+<h3 id="section-12">3.1实验阶段对比</h3>
+<div class="table-wrap"><table><tr><th>实验案例</th><th>Business IR Check</th><th>Compile</th><th>Browser Run</th><th>Result/Oracle</th></tr><tr><td>GC-01</td><td>通过</td><td>成功</td><td>成功</td><td>Oracle部分通过</td></tr><tr><td>GC-02</td><td>通过</td><td>成功</td><td>成功</td><td>Oracle部分通过</td></tr><tr><td>GC-03</td><td>通过</td><td>未执行</td><td>未执行</td><td>未执行</td></tr><tr><td>GC-12</td><td>两组通过</td><td>两组成功</td><td>两组成功</td><td>本地核验完成，正式Oracle未通过验收流程</td></tr><tr><td>GC-13</td><td>无依赖组通过</td><td>无依赖组成功</td><td>无依赖组成功</td><td>Result核验完成；有依据组未执行</td></tr></table></div>
+<h3 id="section-13">3.2已验证的能力</h3>
+<p>通过五个案例，可以确定当前插件已经具备以下能力：</p>
+<p>基础自然语言建模能力： 能够将基础航空任务需求转换为 Business IR。</p>
+<p>单任务执行能力： 能够完成单飞机、单任务的检查、编译和仿真。</p>
+<p>连续架次调度能力： 能够支持同一飞机连续执行多个架次。</p>
+<p>基础时间调度能力： 能够根据计划时间安排任务准备、起飞和返航。</p>
+<p>提前分配能力： 能够在实际起飞之前进行飞机分配。</p>
+<p>基础资源竞争能力： 能够通过任务优先级影响稀缺飞机资源的分配对象。</p>
+<p>结果一致性核验能力： 在已有运行记录中，能够通过 Result、Run Record 和 Event Log 进行原始记录核对。</p>
+<h3 id="section-14">3.3已确认的能力缺口</h3>
+<p>五个实验暴露出以下主要问题：</p>
+<div class="table-wrap"><table><tr><th>编号</th><th>能力缺口</th><th>主要发现案例</th><th>涉及层级</th></tr><tr><td>G-01</td><td>周期状态采样未实现</td><td>GC-01、02、12、13</td><td>Business IR/Plan/Runtime/Result</td></tr><tr><td>G-02</td><td>预约与提前通知语义不清晰</td><td>GC-01、02、13</td><td>Business IR/Runtime</td></tr><tr><td>G-03</td><td>航后作业事件归属与状态表达不足</td><td>GC-02</td><td>Runtime/Result</td></tr><tr><td>G-04</td><td>多飞机联合任务不支持</td><td>GC-03</td><td>Compiler/Plan/Runtime</td></tr><tr><td>G-05</td><td>多机型联合资源约束不支持</td><td>GC-12</td><td>Business IR/Compiler/Runtime</td></tr><tr><td>G-06</td><td>编队完整性和起飞门缺失</td><td>GC-12</td><td>Plan/Runtime</td></tr><tr><td>G-07</td><td>运行时动态优先级调度未实现</td><td>GC-12</td><td>Compiler/Runtime</td></tr><tr><td>G-08</td><td>任务级前置依赖不支持</td><td>GC-13</td><td>Business IR/Core IR/Plan/Runtime</td></tr><tr><td>G-09</td><td>任务等待状态和等待原因不完整</td><td>GC-12、13</td><td>Runtime/Result</td></tr><tr><td>G-10</td><td>结构化任务状态和过程状态输出不足</td><td>GC-01、02、12、13</td><td>Result</td></tr><tr><td>G-11</td><td>延迟与最晚可行准备时间边界存在差异</td><td>GC-01、12</td><td>Compiler/Runtime</td></tr><tr><td>G-12</td><td>Oracle指标和跨引擎数据契约不一致</td><td>GC-01、02、12</td><td>Result/Verification Adapter</td></tr></table></div>
+<h3 id="section-15">3.4当前能力边界</h3>
+<p>从五个案例的结果来看，当前插件的能力边界可以概括为：</p>
+<p>已经具备：</p>
+<p>单飞机基础任务建模。</p>
+<p>单飞机连续架次执行。</p>
+<p>基础计划时间和准备时间调度。</p>
+<p>提前飞机分配。</p>
+<p>通过编译期优先级排序影响资源竞争结果。</p>
+<p>基础事件与统计结果输出。</p>
+<p>尚未具备或尚未验证：</p>
+<p>多架飞机共同执行一个任务波次。</p>
+<p>多机型联合资源需求与完整编队约束。</p>
+<p>资源部分分配及完整编队起飞门控。</p>
+<p>运行时动态优先级调度与抢占。</p>
+<p>任务级前置依赖和依赖解除后的执行门控。</p>
+<p>原生周期状态采样。</p>
+<p>完整的任务级等待、预约、通知和过程状态记录。</p>
+<p>完整的 Oracle 指标及跨引擎一致性验证。</p>
+<h2 id="section-16">问题的技术层级分析</h2>
+<p>从五个实验可以发现，部分问题并不是单独修改 Business IR 就能够解决的，而是涉及整个 IR 转换与执行链。</p>
+<h3 id="section-17">4.1 Business IR 层</h3>
+<p>需要进一步完善：</p>
+<p>任务级前置依赖表达。</p>
+<p>多机型联合资源需求表达。</p>
+<p>预约、通知和资源预留语义。</p>
+<p>周期状态采样配置。</p>
+<p>多飞机任务波次及其参与数量约束。</p>
+<h3 id="section-18">4.2 Core IR / Plan IR 层</h3>
+<p>需要明确：</p>
+<p>多飞机任务的统一表达。</p>
+<p>多机型资源需求的结构化表达。</p>
+<p>任务依赖关系及依赖解除条件。</p>
+<p>飞机部分分配和完整分配状态。</p>
+<p>周期状态采样计划。</p>
+<p>任务等待和调度状态。</p>
+<h3 id="section-19">4.3 Compiler 层</h3>
+<p>需要完善：</p>
+<p>Business IR 到 Core IR / Plan IR 的新字段转换。</p>
+<p>多飞机任务的 lowering。</p>
+<p>多机型联合资源约束转换。</p>
+<p>任务依赖关系转换。</p>
+<p>优先级排序与运行时动态调度职责的区分。</p>
+<p>相关能力检查和错误诊断。</p>
+<h3 id="section-20">4.4 Browser Runtime 层</h3>
+<p>需要完善：</p>
+<p>多飞机联合派发。</p>
+<p>多机型资源齐备判定。</p>
+<p>编队完整性检查和统一起飞门控。</p>
+<p>任务前置依赖门控。</p>
+<p>部分资源分配、等待和取消机制。</p>
+<p>周期状态帧输出。</p>
+<p>预约、通知、等待和任务开始等事件语义。</p>
+<h3 id="section-21">4.5 Result / Oracle 验证层</h3>
+<p>需要完善：</p>
+<p>逐任务状态和终止原因。</p>
+<p>逐飞机任务分配和执行状态。</p>
+<p>完整编队状态。</p>
+<p>周期状态帧。</p>
+<p>航后作业状态及其任务归属。</p>
+<p>运行指标直接输出。</p>
+<p>与案例库 Oracle 的事件、指标及时间单位映射。</p>
+<p>正式跨实现一致性验证。</p>
+<h2 id="section-22">后续改进方向</h2>
+<p>根据实验结果，建议将后续工作划分为以下几个方向：</p>
+<h3 id="section-23">5.1 多飞机与多机型联合任务能力</h3>
+<p>依据GC-03和GC-12的实验结果：</p>
+<p>支持一个任务包含多架飞机。</p>
+<p>支持一个任务声明多个不同机型的联合资源需求。</p>
+<p>支持逐飞机分配与状态追踪。</p>
+<p>支持完整编队形成判定。</p>
+<p>只有满足全部资源要求后才允许任务起飞。</p>
+<p>支持部分分配、等待和资源不足时的取消处理。</p>
+<h3 id="section-24">5.2 任务级依赖能力</h3>
+<p>依据GC-13的实验结果：</p>
+<p>增加正式的任务级依赖字段。</p>
+<p>将依赖关系转换到Core IR / Plan IR。</p>
+<p>实现Runtime任务派发门控。</p>
+<p>明确飞机提前分配与任务实际开始的区别。</p>
+<p>支持等待前置任务完成、依赖解除和后续任务派发事件。</p>
+<h3 id="section-25">5.3 周期状态采样能力</h3>
+<p>依据GC-01、GC-02、GC-12和GC-13：</p>
+<p>完善Business IR采样字段。</p>
+<p>将采样配置转换到Plan。</p>
+<p>在Runtime中生成周期状态帧。</p>
+<p>在Result中保存原始采样数据。</p>
+<p>验证采样间隔、完整性及状态准确性。</p>
+<h3 id="section-26">5.4 任务事件与状态可观测性</h3>
+<p>明确预约、通知、分配、准备、等待、起飞、返航、完成和恢复可用等状态。</p>
+<p>补充对应事件。</p>
+<p>记录等待原因和等待持续时间。</p>
+<p>补充逐任务状态、终止原因和逐飞机执行状态。</p>
+<p>修复航后作业完成事件及任务归属问题。</p>
+<h3 id="section-27">5.5 优先级与延迟机制</h3>
+<p>明确Compiler编译期优先级排序的职责。</p>
+<p>区分静态排序与Runtime动态调度。</p>
+<p>明确优先级是否具有抢占语义。</p>
+<p>完善最晚可行准备开始时间机制。</p>
+<p>开展最大延迟阈值内、阈值边界及超过阈值的独立测试。</p>
+<h3 id="section-28">5.6 Oracle与跨实现验证</h3>
+<p>明确案例库Oracle的输入和输出契约。</p>
+<p>补充事件与指标映射适配器。</p>
+<p>对无法直接输出的指标补充原生观测能力。</p>
+<p>区分派生指标与Runtime原始指标。</p>
+<p>在满足案例库审批及跨实现适配条件后，再开展正式Oracle验收。</p>
+<p>六、实验可信度与结果说明</p>
+<p>本次五个实验的结果需要按照实际执行阶段进行解释。</p>
+<p>Business IR Check通过，仅代表模型通过当前检查，不代表执行功能已经实现。</p>
+<p>Compile成功，仅代表成功生成当前执行链接受的计划，不代表业务语义完全符合需求。</p>
+<p>Browser Run成功，仅代表仿真运行完成，不代表所有Oracle条件均通过。</p>
+<p>Result与Run Record一致，能够证明结果记录与运行记录一致，但不能自动证明模型符合标准参考实现。</p>
+<p>事后根据事件推导出的指标不能替代Runtime直接输出的原始状态或指标。</p>
+<p>未执行的案例不能被描述为执行失败；能力检查拒绝也不能等同于仿真运行失败。</p>
+<p>候选Oracle映射结果不能替代正式Oracle验收。</p>
+<p>本次实验没有因为功能缺失而通过添加未经支持的字段或修改参考结果来制造成功结论。</p>
+<p>因此，五个实验的结论重点是识别当前插件已经具备的能力，以及从需求表达、编译、运行到结果验证各阶段暴露出的实际限制。</p>
+<h2 id="section-29">七、综合实验结论</h2>
+<p>本次JHG-84实验通过五个逐步扩展的案例，对Riffoid IR Plugin的基础任务建模与架次调度能力进行了系统验证。</p>
+<p>实验表明，当前插件已经能够完成单飞机基础任务建模、单飞机连续架次执行、基础计划时间调度、提前飞机分配，以及通过编译期优先级排序影响稀缺资源分配等功能。</p>
+<p>其中，GC-01和GC-02验证了基础任务及连续架次执行能力；GC-12验证了优先级变化对稀缺飞机资源分配结果的影响；GC-13的无依赖组验证了两个独立任务的计划执行与提前分配行为。</p>
+<p>但实验也明确发现，当前执行链仍然存在多飞机联合任务、多机型资源约束、完整编队起飞门控、任务级前置依赖、周期状态采样以及结构化任务状态输出等方面的能力缺口。</p>
+<p>特别是GC-03和GC-13表明，Business IR能够描述部分复杂业务需求，并不意味着Compiler、Plan IR和Browser Runtime已经具备相应的执行能力。</p>
+<p>GC-12进一步说明，当前优先级机制主要体现为编译期任务排序，不能直接解释为运行时动态优先级调度或任务抢占。</p>
+<p>此外，五个案例还共同暴露出结果观测与Oracle验证方面的问题：部分指标缺少原生输出，事件语义不够完整，当前执行链与案例库参考实现之间仍存在数据契约差异。</p>
+<p>综合结论：Riffoid IR Plugin已初步具备基础航空任务建模、单飞机多架次调度和基础资源竞争能力，但尚不能完整支持多飞机联合任务、多机型联合资源约束及任务级依赖调度。与此同时，周期状态采样和完整运行结果观测能力仍需进一步完善。</p>
+<p>本次实验完成了对五个案例的独立验证和能力边界调查，为后续Business IR、Core IR、Plan IR、Compiler、Domain Pack和Browser Runtime的功能扩展提供了实验依据。</p>
+<p>本报告作为 HG-84的综合实验总结，统一归档五个案例的实验结果、问题发现和后续改进方向。</p>
+<h2 id="section-30">实验记录索引</h2>
+<div class="table-wrap"><table><tr><th>案例</th><th>实验目录</th></tr><tr><td>GC-01-A01</td><td>Desktop\riffoid-ir-GC01-experiment</td></tr><tr><td>GC-02-A02</td><td>Desktop\riffoid-ir-GC02-experiment</td></tr><tr><td>GC-03-A03</td><td>Desktop\riffoid-ir-GC03-experiment</td></tr><tr><td>GC-12-A12</td><td>Desktop\riffoid-ir-GC12-experiment</td></tr><tr><td>GC-13-A13</td><td>Desktop\riffoid-ir-GC13-experiment</td></tr></table></div>
+<p>归档原则： 五个案例的原始Business IR、Plan、Run Record、Result、Event Log和Oracle验证材料均作为独立实验依据保留。本综合报告只负责汇总和分析，不替代原始实验记录，也不修改历史实验结论。</p>
+<p>报告状态： 五个案例的阶段实验总结已整合；后续功能改进与正式Oracle验收仍需独立开展。</p></main></div>
+<footer>Riffoid IR Plugin · JHG-84 Integrated Experiment Report</footer>
+<a class="toplink" href="#top">返回顶部 ↑</a>
+</body></html>

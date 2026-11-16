@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="张振豪">
+<title>Riffoid IR Compiler与Browser Runtime黑盒集成实验报告</title>
+<style>
+:root {
+  --ink: #1f2937;
+  --muted: #64748b;
+  --line: #dbe4ef;
+  --paper: #ffffff;
+  --bg: #eef3f9;
+  --navy: #0f2742;
+  --navy-2: #173f63;
+  --accent: #0f7c87;
+  --accent-soft: #e6f5f6;
+  --code-bg: #f4f7fb;
+  --thead: #e8f0f8;
+  --shadow: 0 18px 50px rgba(15, 39, 66, .12);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(15,124,135,.10), transparent 29rem),
+    radial-gradient(circle at 100% 12%, rgba(23,63,99,.10), transparent 34rem),
+    var(--bg);
+  font-family: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  line-height: 1.82;
+  font-size: 16px;
+}
+a { color: var(--accent); }
+.hero {
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.06) 0 1px, transparent 1px 18px),
+    linear-gradient(135deg, var(--navy), var(--navy-2));
+  background-size: 18px 18px, auto;
+  padding: 64px 24px 48px;
+}
+.hero-inner, .report, .footer-inner { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+.eyebrow { font-size: .82rem; letter-spacing: .14em; text-transform: uppercase; color: #9edde3; font-weight: 700; }
+h1 { font-size: clamp(2rem, 4.5vw, 3.35rem); line-height: 1.25; margin: 14px 0 10px; letter-spacing: -.02em; }
+.subtitle { color: #c9d8e9; font-size: 1.05rem; margin: 0 0 28px; }
+.meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; max-width: 980px; }
+.meta-item { padding: 10px 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; background: rgba(255,255,255,.06); }
+.meta-item span { display: block; color: #9fb6cd; font-size: .76rem; }
+.meta-item strong { display: block; margin-top: 2px; color: #fff; font-size: .9rem; font-weight: 650; overflow-wrap: anywhere; }
+.status {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 26px;
+  padding: 8px 14px; border-radius: 999px; background: #d9f5ef; color: #0b5c51;
+  font-weight: 700; font-size: .88rem;
+}
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #10a37f; box-shadow: 0 0 0 4px rgba(16,163,127,.14); }
+.report { background: var(--paper); margin-top: -24px; border-radius: 18px; box-shadow: var(--shadow); padding: clamp(26px, 5vw, 58px); }
+.toc { background: linear-gradient(135deg, #f6fafd, #edf5fa); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; margin: 0 0 38px; }
+.toc-title { color: var(--navy); font-weight: 800; font-size: 1.05rem; margin-bottom: 10px; }
+.toc ol { columns: 2; column-gap: 36px; margin: 0; padding-left: 20px; }
+.toc li { break-inside: avoid; margin: 5px 0; }
+.toc a { color: #34506b; text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+.toc-l2 { margin-left: 16px !important; font-size: .92rem; }
+h2 {
+  color: var(--navy); font-size: 1.62rem; line-height: 1.35; margin: 48px 0 18px;
+  padding: 0 0 10px 15px; border-left: 5px solid var(--accent); border-bottom: 1px solid var(--line);
+}
+h3 { color: #153b5c; font-size: 1.2rem; margin: 34px 0 14px; }
+p { margin: 10px 0; }
+.report-list { margin: 10px 0 16px; padding-left: 28px; }
+.report-list li { margin: 5px 0; padding-left: 4px; }
+.report-list li::marker { color: var(--accent); }
+.code-block {
+  margin: 14px 0; padding: 12px 16px; border-radius: 9px;
+  border: 1px solid #d9e4f0; border-left: 4px solid var(--accent);
+  background: var(--code-bg); color: #12324f; overflow-wrap: anywhere;
+}
+code {
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: .9em; color: #12324f; background: #f0f5fa; border-radius: 4px; padding: 1px 5px;
+}
+.code-block code { background: transparent; padding: 0; font-size: .91rem; }
+.table-wrap { margin: 18px 0 28px; overflow-x: auto; border: 1px solid var(--line); border-radius: 11px; }
+table { width: 100%; border-collapse: collapse; min-width: 460px; font-size: .94rem; }
+thead { background: var(--thead); }
+th, td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: #173b5c; font-weight: 750; }
+tbody tr:nth-child(even) { background: #fbfdff; }
+tbody tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+.footer { padding: 26px 0 46px; color: var(--muted); font-size: .86rem; }
+.footer-inner { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .hero { padding-top: 48px; }
+  .report { width: calc(100% - 24px); border-radius: 12px; }
+  .toc ol { columns: 1; }
+  table { min-width: 560px; }
+  h2 { font-size: 1.36rem; }
+}
+@media print {
+  body { background: #fff; font-size: 11pt; }
+  .hero { background: #fff !important; color: #111; padding: 0 0 20px; }
+  .hero-inner, .report, .footer-inner { width: 100%; }
+  .eyebrow, .subtitle, .meta-item span { color: #555; }
+  .meta-item, .status { border: 1px solid #bbb; background: #f7f7f7; color: #111; }
+  .meta-item strong { color: #111; }
+  .report { margin: 0; box-shadow: none; padding: 0; }
+  .toc { break-after: page; }
+  h2 { break-before: page; }
+  h2:first-of-type { break-before: auto; }
+  .table-wrap { overflow: visible; break-inside: avoid; }
+  table { min-width: 0; font-size: 9pt; }
+  thead { display: table-header-group; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Riffoid IR · Integration Test</div>
+    <h1>Riffoid IR Compiler与Browser Runtime黑盒集成实验报告</h1>
+    <p class="subtitle">Compiler 与 Browser Runtime 黑盒集成验证</p>
+    <div class="meta-grid"><div class="meta-item"><span>作者</span><strong>张振豪</strong></div><div class="meta-item"><span>文档日期</span><strong>2026-11-16</strong></div><div class="meta-item"><span>Plan Schema</span><strong>aircraft-support-plan/v1alpha2</strong></div><div class="meta-item"><span>Runtime</span><strong>aircraft-support-browser/0.4.0</strong></div><div class="meta-item"><span>执行等级</span><strong>local-unverified</strong></div></div>
+    <div class="status">核心黑盒集成验证通过</div>
+  </div>
+</header>
+<main class="report">
+<nav class="toc" aria-label="目录"><div class="toc-title">目录</div><ol><li class="toc-l1"><a href="#section-1">一、实验概况</a></li><li class="toc-l2"><a href="#section-2">1.1 实验名称</a></li><li class="toc-l2"><a href="#section-3">1.2 实验目的</a></li><li class="toc-l2"><a href="#section-4">1.3 实验环境</a></li><li class="toc-l1"><a href="#section-5">二、实验业务需求</a></li><li class="toc-l1"><a href="#section-6">三、实验执行过程</a></li><li class="toc-l2"><a href="#section-7">3.1 自然语言需求转换为Business IR</a></li><li class="toc-l2"><a href="#section-8">3.2 Compiler 编译</a></li><li class="toc-l2"><a href="#section-9">3.3 Fused Plan结构确认</a></li><li class="toc-l2"><a href="#section-10">3.4 Browser Artifact生成</a></li><li class="toc-l1"><a href="#section-11">四、仿真执行结果</a></li><li class="toc-l2"><a href="#section-12">4.1 首次正常运行</a></li><li class="toc-l2"><a href="#section-13">4.2 单实例故障验证</a></li><li class="toc-l2"><a href="#section-14">4.3 双实例故障验证</a></li><li class="toc-l2"><a href="#section-15">4.4 完整运行矩阵</a></li><li class="toc-l1"><a href="#section-16">五、实验验证结论</a></li><li class="toc-l2"><a href="#section-17">5.1 Compiler集成验证</a></li><li class="toc-l2"><a href="#section-18">5.2 Browser Runtime集成验证</a></li><li class="toc-l2"><a href="#section-19">5.3 最终结论</a></li><li class="toc-l1"><a href="#section-20">六、实验边界及注意事项</a></li><li class="toc-l1"><a href="#section-21">七、实验文件与证据归档</a></li><li class="toc-l1"><a href="#section-22">八、后续建议</a></li></ol></nav>
+<h2 id="section-1">一、实验概况</h2><h3 id="section-2">1.1 实验名称</h3><p>Riffoid IR Compiler与IR Plugin Browser Runtime黑盒集成验证（Riffoid_BlackBox_Test_01）</p><h3 id="section-3">1.2 实验目的</h3><p>本次实验旨在通过自然语言业务需求，验证新版sim_engine_compiler与Riffoid IR Plugin之间的实际集成情况。</p><p>实验不直接向Pi Web提供Business IR Schema或Plan字段定义，而是以普通业务需求作为输入，要求Pi Web通过插件正常工作流程完成模型构建、检查、编译和仿真。</p><p>重点验证以下内容：</p><ol class="report-list"><li>Pi Web是否能够根据自然语言需求构建符合要求的Business IR。</li><li>Compiler是否能够生成新版融合可靠性结构（Fused Reliability Plan）。</li><li>IR Plugin是否能够正确接收并保存Compiler生成的Plan。</li><li>Browser Runtime是否能够执行新版Fused Plan。</li><li>Runtime是否能够正确处理实例级故障、冗余逻辑和维修。</li><li>实际仿真结果是否符合预期的可靠性语义。</li></ol><h3 id="section-4">1.3 实验环境</h3><div class="table-wrap"><table><thead><tr><th scope="col">项目</th><th scope="col">实际环境</th></tr></thead><tbody><tr><td>Compiler仓库</td><td>sim_engine_compiler</td></tr><tr><td>Compiler版本</td><td>sim-engine-compiler 0.1.0</td></tr><tr><td>Compiler Python</td><td>Python 3.12</td></tr><tr><td>Compiler源码路径</td><td>C:\Users\woain\Desktop\sim_engine_compiler\src</td></tr><tr><td>IR Plugin仓库</td><td>riffoid-ir-plugin-main</td></tr><tr><td>Plugin Browser Runtime</td><td><code>aircraft-support-browser/0.4.0</code></td></tr><tr><td>Plan Schema</td><td><code>aircraft-support-plan/v1alpha2</code></td></tr><tr><td>Reliability Policy</td><td><code>instance-redundancy/v1</code></td></tr><tr><td>执行位置</td><td>user-browser</td></tr><tr><td>执行等级</td><td>local-unverified</td></tr></tbody></table></div><h2 id="section-5">二、实验业务需求</h2><p>本次采用的业务需求为：</p><p>一架F35战斗机执行一个飞行任务，配备一套由两个功能相同、能够独立工作的雷达单元组成的雷达设备。</p><p>雷达系统采用1-out-of-2冗余机制：</p><ul class="report-list"><li>两个雷达单元中至少有一个正常，整个雷达系统就可以继续工作。</li><li>两个雷达单元全部发生故障，整个雷达系统才失效。</li><li>每个雷达单元的故障率为每飞行小时0.5。</li><li>每个雷达单元发生故障后的维修时间为10分钟。</li></ul><p>本次实验的主要可靠性配置：</p><div class="table-wrap"><table><thead><tr><th scope="col">配置项</th><th scope="col">数值</th></tr></thead><tbody><tr><td>飞机型号</td><td>F35</td></tr><tr><td>雷达组件组</td><td>radar-system</td></tr><tr><td>冗余类型</td><td>k_out_of_n</td></tr><tr><td>k</td><td>1</td></tr><tr><td>n</td><td>2</td></tr><tr><td>雷达实例数量</td><td>2</td></tr><tr><td>实例 A</td><td>radar-a</td></tr><tr><td>实例 B</td><td>radar-b</td></tr><tr><td>单实例故障率</td><td>0.5 / 飞行小时</td></tr><tr><td>单实例维修时间</td><td>10 分钟</td></tr></tbody></table></div><p>对于需求中未明确指定的部分，模型采用了默认配置，并在原始需求记录中进行了说明。</p><h2 id="section-6">三、实验执行过程</h2><h3 id="section-7">3.1 自然语言需求转换为Business IR</h3><p>通过Pi Web对话输入业务需求，要求插件按照正常工作流程创建模型。</p><p>实际完成：</p><ul class="report-list"><li>创建原始需求记录。</li><li>根据业务需求生成Business IR。</li><li>将Business IR写入插件工作区。</li><li>使用project_ir_check执行检查和Seal。</li></ul><p>第一次Check / Seal成功，但第一次Compile出现：</p><p class="code-block"><code>invalid_ir @ business.fingerprint checksum mismatch</code></p><p>经调查，问题与浮点数1.0在Python canonical JSON和JavaScript JSON序列化时的表示差异有关。将successPoint: 1.0修正为整数1后，重新执行Check / Seal和Compile，最终成功。</p><p>该问题及修正过程被保留在实验记录中。</p><h3 id="section-8">3.2 Compiler 编译</h3><p>使用本地新版sim_engine_compiler完成编译。</p><p>实际Compiler SDK导入路径：</p><p class="code-block"><code>Desktop\sim_engine_compiler\src\sim_engine_compiler</code></p><p>编译成功后生成：</p><ul class="report-list"><li>Business IR</li><li>Core IR</li><li>Fused Plan</li><li>Compile Report</li><li>Simpack</li><li>Browser Artifact</li></ul><p>独立CLI复核也成功完成，编译报告状态为：</p><p class="code-block"><code>sim-engine-compile/v1 status=valid</code></p><p>独立复核生成的.simpack与插件工具生成的.simpack字节级一致。</p><p>最终Plan指纹：</p><p class="code-block"><code>5f442ff8…2fd145</code></p><p>Business IR指纹：</p><p>55482086…</p><h3 id="section-9">3.3 Fused Plan结构确认</h3><p>最终生成的Plan类型：</p><p class="code-block"><code>aircraft-support-plan/v1alpha2</code></p><p>可靠性策略：</p><p class="code-block"><code>instance-redundancy/v1</code></p><p>Plan中包含：</p><ul class="report-list"><li>1个component group。</li><li>2个component instances。</li><li>redundancy_kind = k_out_of_n。</li><li>redundancy_k = 1。</li><li>redundancy_n = 2。</li><li>每个实例独立的故障率和可靠性状态。</li><li>实例级维修配置。</li></ul><p>同时：</p><p class="code-block"><code>components = []</code></p><p>说明本次生成的是新版融合可靠性结构，而不是旧版legacy components结构。</p><h3 id="section-10">3.4 Browser Artifact生成</h3><p>Compiler生成的Plan经IR Plugin正常流程传递，最终生成Browser Artifact。</p><p>Artifact指纹：</p><p class="code-block"><code>6a8069926e633823385e692aee786abe8f239c48054dd10d677b599889594b45</code></p><p>Artifact路径：</p><p class="code-block"><code>.riffoid-ir/artifacts/6a8069926e633823385e692aee786abe8f239c48054dd10d677b599889594b45/browser.json</code></p><p>后续仿真均直接使用这一Artifact，没有重新生成Plan或重新编译。</p><h2 id="section-11">四、仿真执行结果</h2><h3 id="section-12">4.1 首次正常运行</h3><p>首次运行使用seed 0。</p><p>Run ID：</p><p class="code-block"><code>run-714e4441-c034-436c-910b-3b253afdc71e</code></p><p>执行结果：</p><div class="table-wrap"><table><thead><tr><th scope="col">项目</th><th scope="col">结果</th></tr></thead><tbody><tr><td>Run状态</td><td>succeeded</td></tr><tr><td>飞机出动时间</td><td>540分钟（09:00）</td></tr><tr><td>正常返场时间</td><td>630分钟（10:30）</td></tr><tr><td>飞行时长</td><td>90分钟</td></tr><tr><td>completed_sorties</td><td>1</td></tr><tr><td>successful_mission_waves</td><td>1</td></tr><tr><td>lru_failures</td><td>0</td></tr><tr><td>in_flight_failures</td><td>0</td></tr></tbody></table></div><p>本次没有触发雷达实例故障。</p><p>该结果验证了正常情况下Fused Plan能够被Browser Runtime正常加载和执行，但尚不能证明冗余故障分支正确。</p><h3 id="section-13">4.2 单实例故障验证</h3><p>使用同一个Browser Artifact，更换随机种子进行重复运行。</p><p>seed 1：</p><p>Run ID：</p><p class="code-block"><code>run-598d1cec-b4f5-400c-840c-507b8a7a0d04</code></p><p>执行过程：</p><ol class="report-list"><li>飞机于540分钟出动。</li><li>558分钟，radar-a发生故障。</li><li>radar-b保持正常。</li><li>没有触发aircraft_failed。</li><li>飞机继续执行任务。</li><li>630分钟正常返场。</li><li>radar-a在630–640分钟完成10分钟维修。</li></ol><p>关键结果：</p><ul class="report-list"><li>lru_failures = 1</li><li>in_flight_failures = 0</li><li>成功判定点通过。</li><li>members = 1</li></ul><p>seed 3也复现了相同类型的单实例故障场景：</p><p>Run ID：</p><p class="code-block"><code>run-aaf75186-ffa4-4747-8836-f7228fdbcd01</code></p><p>radar-a于573分钟发生故障，radar-b保持正常，飞机继续完成任务。</p><p>验证结论：当两个实例中只有一个发生故障时，剩余健康实例能够维持雷达系统可用，符合 1-out-of-2冗余要求。</p><h3 id="section-14">4.3 双实例故障验证</h3><p>seed 4成功触发两个雷达实例先后故障。</p><p>Run ID：</p><p class="code-block"><code>run-ec6c781b-4749-4442-8020-5f67af3d56dd</code></p><p>执行过程：</p><ol class="report-list"><li>飞机于540分钟出动。</li><li>554分钟，radar-b发生故障。</li><li>此时radar-a仍然正常，系统继续可用。</li><li>573 分钟，radar-a发生故障。</li><li>两个实例全部失效。</li><li>健康实例数量降为0，小于要求的k=1。</li><li>Runtime触发aircraft_failed。</li><li>飞机提前返场，产生mission_failed_returned。</li><li>成功判定点失败，members = 0。</li><li>两个实例分别完成10分钟维修。</li></ol><p>关键结果：</p><div class="table-wrap"><table><thead><tr><th scope="col">指标</th><th scope="col">结果</th></tr></thead><tbody><tr><td>lru_failures</td><td>2</td></tr><tr><td>in_flight_failures</td><td>1</td></tr><tr><td>failed_sorties</td><td>1</td></tr><tr><td>successful_mission_waves</td><td>0</td></tr><tr><td>radar-a故障时间</td><td>573分钟</td></tr><tr><td>radar-b故障时间</td><td>554分钟</td></tr><tr><td>radar-a维修时间</td><td>573–583分钟</td></tr><tr><td>radar-b维修时间</td><td>583–593分钟</td></tr></tbody></table></div><p>维修按照单机位资源约束串行执行。</p><p>验证结论：当两个雷达实例全部发生故障时，雷达系统失效，Runtime正确触发飞机失效和任务失败返场，符合1-out-of-2冗余要求。</p><h3 id="section-15">4.4 完整运行矩阵</h3><div class="table-wrap"><table><thead><tr><th scope="col">Seed</th><th scope="col">Run ID</th><th scope="col">故障数量</th><th scope="col">故障实例</th><th scope="col">任务结果</th></tr></thead><tbody><tr><td>0</td><td><code>run-714e4441-c034-436c-910b-3b253afdc71e</code></td><td>0</td><td>无</td><td>正常完成</td></tr><tr><td>1</td><td><code>run-598d1cec-b4f5-400c-840c-507b8a7a0d04</code></td><td>1</td><td>radar-a</td><td>正常完成</td></tr><tr><td>2</td><td><code>run-82999253-d852-41bf-b501-439f66d9fb08</code></td><td>0</td><td>无</td><td>正常完成</td></tr><tr><td>3</td><td><code>run-aaf75186-ffa4-4747-8836-f7228fdbcd01</code></td><td>1</td><td>radar-a</td><td>正常完成</td></tr><tr><td>4</td><td><code>run-ec6c781b-4749-4442-8020-5f67af3d56dd</code></td><td>2</td><td>radar-a、radar-b</td><td>提前返场，任务失败</td></tr></tbody></table></div><p>最终在5次运行中，成功观测到：</p><ul class="report-list"><li>正常运行场景。</li><li>单实例故障、系统继续可用场景。</li><li>双实例故障、系统整体失效场景。</li></ul><p>达到本次实验预定的可靠性行为验证目标后停止继续抽样。</p><h2 id="section-16">五、实验验证结论</h2><h3 id="section-17">5.1 Compiler集成验证</h3><p>本次实验实际证明：</p><ol class="report-list"><li>Pi Web能够根据自然语言业务需求创建Business IR。</li><li>Business IR能够通过插件的Check / Seal流程。</li><li>新版Compiler能够生成 aircraft-support-plan/v1alpha2 Fused Plan。</li><li>Fused Plan中能够正确生成component groups和component instances。</li><li>编译生成的Plan能够通过插件流程传递到Browser Artifact。</li><li>插件交接过程中，Plan指纹与编译记录保持一致。</li></ol><h3 id="section-18">5.2 Browser Runtime集成验证</h3><p>本次实验实际证明：</p><ol class="report-list"><li>Browser Runtime 0.4.0能够加载并执行新版Fused Plan。</li><li>Runtime能够识别实例级可靠性结构。</li><li>Runtime能够分别维护radar-a和radar-b的可靠性状态。</li><li>单个实例故障不会直接导致整个系统失效。</li><li>两个实例全部故障后能够触发系统失效。</li><li>Runtime能够执行实例级维修。</li><li>仿真能够正常生成Run Result，并通过插件的project_ir_result获取结果。</li></ol><h3 id="section-19">5.3 最终结论</h3><p>本次黑盒实验达到了预定目标。</p><p>新版sim_engine_compiler与Riffoid IR Plugin的核心集成链路已经通过实际端到端实验验证：</p><p>自然语言需求<br>→ Business IR<br>→ Check / Seal<br>→ Compiler<br>→ Core IR<br>→ Fused Plan<br>→ Browser Artifact<br>→ Browser Runtime<br>→ Run Result</p><p>同时，针对提出的实例级冗余语义，本次实验已经实际验证：</p><ul class="report-list"><li>不同组件组之间的可靠性逻辑按各自定义执行。</li><li>同一组件组内采用k-out-of-n冗余。</li><li>quantity不等同于冗余。</li><li>单实例故障不会导致整个系统失效（当剩余健康实例满足k时）。</li><li>全部必要实例失效后，系统正确进入失效状态。</li><li>故障和维修能够落实到具体实例。</li></ul><p>因此，本次实验不仅验证了Plan的生成和传递，也验证了Fused Plan在Browser Runtime中的实际执行行为。</p><h2 id="section-20">六、实验边界及注意事项</h2><p>本次实验成功不代表所有功能和所有执行环境都已完成验证。</p><p>仍需明确以下边界：</p><ol class="report-list"><li>本次只验证了F35雷达组件的1-out-of-2场景，不代表所有复杂组件树、父子实例映射和多层冗余组合都已完成验证。</li><li>本次使用Browser Runtime 0.4.0，执行位置为user-browser，执行等级为local-unverified。实验结果证明本地浏览器执行链路可用，但不代表已经完成外部可信执行环境验证。</li><li>本次没有验证Rust AOT Compiler与插件Browser Runtime的直接集成。</li><li>本次没有验证所有历史legacy Plan的迁移和兼容行为。</li><li>首次Compile出现的fingerprint checksum mismatch已通过将successPoint从浮点数1.0改为整数1解决，该问题应保留为本次实验中的序列化兼容性记录。</li><li>部分统计指标存在不同事件分支的计数口径差异。例如单实例故障后成功返场的运行中，completed_sorties为0，但successful_mission_waves为1。评估任务结果时应结合事件流和成功判定指标，而不是单独依赖某个计数。</li><li>双实例故障运行结束时，两个实例的终态快照均显示failed:false，是因为仿真结束前已经完成维修。故障是否发生应依据事件流及故障指标判断，而不能只看终态快照。</li></ol><h2 id="section-21">七、实验文件与证据归档</h2><p>实验输出目录：</p><p class="code-block"><code>Desktop\Riffoid_BlackBox_Test_01</code></p><p>主要文件：</p><div class="table-wrap"><table><thead><tr><th scope="col">文件</th><th scope="col">内容</th></tr></thead><tbody><tr><td>01_原始需求.md</td><td>原始自然语言需求和默认参数说明</td></tr><tr><td>02a_business-ir.draft.json</td><td>Business IR草稿</td></tr><tr><td>02b_business-ir.sealed.json</td><td>Seal后的Business IR</td></tr><tr><td>03_check-result.json</td><td>Check / Seal结果</td></tr><tr><td>04_compile-result.json</td><td>Compile结果</td></tr><tr><td>05_compile-report.json</td><td>Compiler官方报告</td></tr><tr><td>06_plan-inspection.json</td><td>Plan检查信息</td></tr><tr><td>07_plan.json</td><td>最终Fused Plan</td></tr><tr><td>08_browser-artifact.json</td><td>Browser Artifact</td></tr><tr><td>09_model.simpack</td><td>编译产物包</td></tr><tr><td>10_执行记录与文件清单.md</td><td>第一阶段执行记录</td></tr><tr><td>11_run-result-run-714e4441.json</td><td>seed 0运行结果</td></tr><tr><td>12_运行报告.md</td><td>首次仿真报告</td></tr><tr><td>13_run-seed1_run-598d1cec.json</td><td>seed 1运行结果</td></tr><tr><td>13_run-seed2_run-82999253.json</td><td>seed 2运行结果</td></tr><tr><td>13_run-seed3_run-aaf75186.json</td><td>seed 3运行结果</td></tr><tr><td>13_run-seed4_run-ec6c781b.json</td><td>seed 4运行结果</td></tr><tr><td>14_可靠性验证报告.md</td><td>单实例及双实例故障验证报告</td></tr></tbody></table></div><p>权威Run Result仍保存在插件工作区：</p><p class="code-block"><code>.riffoid-ir/runs/&lt;Run ID&gt;/record.json</code></p><p>本次运行报告及JSON文件作为独立归档保存。</p><p>实验期间没有重新创建Business IR、没有重新执行Check / Seal、没有重新编译、没有修改模型、Plan或Runtime，也没有覆盖前期运行记录。</p><h2 id="section-22">八、后续建议</h2><p>本次黑盒实验已经达到预定目标，建议暂时停止继续扩大随机仿真范围。</p><p>下一步工作建议：</p><ol class="report-list"><li>将本报告及关键Run Result作为集成验收证据保存。</li><li>更新sim_engine_compiler PR #561的实际完成情况。</li><li>更新Riffoid IR Plugin对应的Linear Issue，说明新版Fused Plan已完成Browser Runtime实际执行验证。</li><li>将本次实验中发现的fingerprint序列化问题作为单独的记录保留，不与本次可靠性逻辑验证结果混淆。</li><li>后续如需扩大覆盖范围，再单独安排父子组件、多层组件树或更复杂冗余结构测试。</li></ol><p>实验最终状态：核心黑盒集成验证通过。</p><p>本次实验已证明：新版Compiler生成的Fused Plan能够通过IR Plugin 正常传递至Browser Runtime，并且Runtime能够按照实例级k-out-of-n可靠性规则执行故障、系统失效和维修逻辑。</p>
+</main>
+<footer class="footer">
+  <div class="footer-inner">
+    <span>来源：Riffoid IR Compiler与Browser Runtime黑盒集成实验报告.docx</span>
+    <span>HTML 版 · 保持原文内容与表格结构</span>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>综合航空保障仿真实验报告 · Integrated Aviation Support Experiment Report</title>
+<meta name="description" content="综合航空保障仿真实验报告（2026-11-18）：实验 A 正常保障场景与实验 B 故障维修压力场景。">
+<style>
+:root {
+  --bg: #f6f8fa;
+  --fg: #1f2328;
+  --muted: #656d76;
+  --border: #d0d7de;
+  --accent: #0969da;
+  --header: #24292f;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--header); color: #fff;
+  border-bottom: 4px solid var(--accent);
+}
+.site-header .inner {
+  max-width: 1180px; margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.site-header .mark {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #fff; color: var(--header);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex: none;
+}
+.site-header .title { font-weight: 600; font-size: 15px; }
+.site-header .subtitle { color: #8b949e; font-size: 13px; margin-left: auto; white-space: nowrap; }
+.hero {
+  background: linear-gradient(135deg, #0969da 0%, #218bff 60%, #54aeff 100%);
+  color: #fff; padding: 48px 24px 56px;
+}
+.hero .inner { max-width: 1180px; margin: 0 auto; }
+.hero h1 { margin: 0 0 12px; font-size: 32px; font-weight: 700; letter-spacing: .5px; }
+.hero .meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+.hero .badge {
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px; padding: 3px 12px;
+}
+.layout {
+  max-width: 1180px; margin: -28px auto 60px; padding: 0 24px;
+  display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px;
+  align-items: start;
+}
+@media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+nav.toc {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 6px 16px 16px; position: sticky; top: 84px;
+  max-height: calc(100vh - 108px); overflow: auto;
+  box-shadow: 0 3px 10px rgba(31,35,40,.06);
+}
+@media (max-width: 920px) { nav.toc { position: static; max-height: none; } }
+nav.toc .toc-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .08em; margin: 0 0 8px 10px; }
+nav.toc ul { list-style: none; margin: 0; padding: 0; }
+nav.toc li a {
+  display: block; padding: 4px 10px; border-radius: 6px;
+  color: var(--fg); text-decoration: none; font-size: 13.5px;
+}
+nav.toc li.toc-l3 a { padding-left: 26px; color: var(--muted); }
+nav.toc li a:hover { background: #eaeef2; color: var(--accent); }
+nav.toc li a.active { background: #ddf4ff; color: var(--accent); font-weight: 600; }
+main {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 40px 48px; box-shadow: 0 3px 10px rgba(31,35,40,.06);
+  min-width: 0;
+}
+@media (max-width: 640px) { main { padding: 24px 18px; } }
+main h2 {
+  font-size: 24px; margin: 44px 0 16px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+main h2:first-of-type { margin-top: 0; }
+main h3 { font-size: 19px; margin: 32px 0 12px; }
+main h4 { font-size: 16px; margin: 24px 0 10px; color: #24292f; }
+main p { margin: 0 0 16px; }
+main p.lead { font-weight: 600; }
+main ul { margin: 0 0 16px; padding-left: 26px; }
+main li { margin: 6px 0; }
+main strong { font-weight: 600; }
+main a { color: var(--accent); text-decoration: none; }
+main a:hover { text-decoration: underline; }
+.table-wrap { overflow-x: auto; margin: 0 0 20px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; font-weight: 600; }
+tbody td:first-child { font-weight: 600; }
+tr:nth-child(2n) td { background: #fbfcfd; }
+code { background: rgba(175,184,193,.2); padding: .2em .4em; border-radius: 6px; font-size: 85%; font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace; }
+.meta-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px; margin: 0 0 28px;
+}
+.meta-card {
+  border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+  background: #f6f8fa;
+}
+.meta-card .k { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .05em; }
+.meta-card .v { margin-top: 4px; font-weight: 600; font-size: 14px; }
+.callout {
+  border-left: 4px solid var(--accent); background: #f0f7ff;
+  padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 0 0 18px;
+}
+.formula {
+  background: #f6f8fa; border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px; margin: 0 0 18px; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+  font-size: 14px;
+}
+.code-block {
+  background: #f6f8fa; border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; overflow: auto; margin: 0 0 20px;
+}
+.code-block code { background: none; padding: 0; font-size: 13px; color: #24292f; white-space: pre; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 24px 48px; }
+footer a { color: var(--accent); text-decoration: none; }
+@media print {
+  .site-header, nav.toc, footer { display: none; }
+  body { background: #fff; }
+  .hero { background: #fff; color: #000; padding: 0 0 20px; }
+  .layout { display: block; margin: 0; padding: 0; max-width: none; }
+  main { border: none; box-shadow: none; padding: 0; }
+}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <span class="mark">R</span>
+    <span class="title">riffoid-ir-experiment-report</span>
+    <span class="subtitle">Integrated Aviation Support · Experiment Report</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="inner">
+    <h1>综合航空保障仿真实验报告</h1>
+    <div class="meta">
+      <span class="badge">Riffoid IR 结果</span>
+      <span class="badge">2026-11-18</span>
+      <span class="badge">168 h</span>
+      <span class="badge">seed 20251118</span>
+      <span class="badge">主模型 + 压力模型</span>
+      <span class="badge">local-unverified</span>
+    </div>
+  </div>
+</section>
+
+<div class="layout">
+  <nav class="toc" aria-label="目录">
+    <p class="toc-title">目录 Contents</p>
+    <ul>
+<li class="toc-l2"><a href="#sec-1">一、 实验目的</a></li>
+<li class="toc-l2"><a href="#sec-2">二、 原始自然语言需求与目标范围</a></li>
+<li class="toc-l3"><a href="#sec-3">2.1 原始需求全文</a></li>
+<li class="toc-l3"><a href="#sec-4">2.2 原始需求与本次实验的关系</a></li>
+<li class="toc-l2"><a href="#sec-5">三、 实验环境与模型版本</a></li>
+<li class="toc-l3"><a href="#sec-6">3.1 模型及编译信息</a></li>
+<li class="toc-l3"><a href="#sec-7">3.2 不可变产物引用</a></li>
+<li class="toc-l2"><a href="#sec-8">四、实验参数</a></li>
+<li class="toc-l3"><a href="#sec-9">4.1 仿真时间与随机数</a></li>
+<li class="toc-l3"><a href="#sec-10">4.2 机队与基地</a></li>
+<li class="toc-l3"><a href="#sec-11">4.3 任务计划</a></li>
+<li class="toc-l3"><a href="#sec-12">4.4 保障作业参数</a></li>
+<li class="toc-l3"><a href="#sec-13">4.5 六系统可靠性与维修参数</a></li>
+<li class="toc-l3"><a href="#sec-14">4.6 压力测试模型</a></li>
+<li class="toc-l2"><a href="#sec-15">五、实验执行过程</a></li>
+<li class="toc-l2"><a href="#sec-16">六、实验 A：正常保障场景</a></li>
+<li class="toc-l3"><a href="#sec-17">6.1 总体运行结果</a></li>
+<li class="toc-l3"><a href="#sec-18">6.2 任务调度情况</a></li>
+<li class="toc-l3"><a href="#sec-19">6.3 各飞机任务执行情况</a></li>
+<li class="toc-l3"><a href="#sec-20">6.4 故障情况</a></li>
+<li class="toc-l3"><a href="#sec-21">6.5 维修与保障资源</a></li>
+<li class="toc-l3"><a href="#sec-22">6.6 人员与设备使用情况</a></li>
+<li class="toc-l3"><a href="#sec-23">6.7 实验 A 终态</a></li>
+<li class="toc-l2"><a href="#sec-24">7. 实验 B：故障与维修调度验证</a></li>
+<li class="toc-l3"><a href="#sec-25">7.1 总体运行结果</a></li>
+<li class="toc-l3"><a href="#sec-26">7.2 故障事件明细</a></li>
+<li class="toc-l3"><a href="#sec-27">7.3 故障期间的任务表现</a></li>
+<li class="toc-l3"><a href="#sec-28">7.4 维修工单明细</a></li>
+<li class="toc-l3"><a href="#sec-29">7.5 同一飞机多故障的串行维修</a></li>
+<li class="toc-l3"><a href="#sec-30">7.6 维修后恢复与再次故障</a></li>
+<li class="toc-l3"><a href="#sec-31">7.7 人员与设备使用情况</a></li>
+<li class="toc-l3"><a href="#sec-32">7.8 维修停机与可用率</a></li>
+<li class="toc-l3"><a href="#sec-33">7.9 实验 B 终态</a></li>
+<li class="toc-l2"><a href="#sec-34">八、实验结果分析</a></li>
+<li class="toc-l3"><a href="#sec-35">8.1 正常保障场景分析</a></li>
+<li class="toc-l3"><a href="#sec-36">8.2 故障维修场景分析</a></li>
+<li class="toc-l3"><a href="#sec-37">8.3 两组实验对照</a></li>
+<li class="toc-l2"><a href="#sec-38">九、当前模型限制</a></li>
+<li class="toc-l2"><a href="#sec-39">十、实验数据与可追溯性</a></li>
+<li class="toc-l3"><a href="#sec-40">10.1 实验 A 数据目录</a></li>
+<li class="toc-l3"><a href="#sec-41">10.2 实验 B 数据目录</a></li>
+<li class="toc-l3"><a href="#sec-42">9.3 汇总与复算文件</a></li>
+<li class="toc-l3"><a href="#sec-43">10.4 主要统计口径</a></li>
+<li class="toc-l3"><a href="#sec-44">9.5 历史记录保留</a></li>
+<li class="toc-l2"><a href="#sec-45">十一、实验复现</a></li>
+<li class="toc-l3"><a href="#sec-46">11.1 主模型</a></li>
+<li class="toc-l3"><a href="#sec-47">11.2 压力测试模型</a></li>
+<li class="toc-l3"><a href="#sec-48">11.3 统计结果复算</a></li>
+<li class="toc-l2"><a href="#sec-49">十二、实验结论</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="meta-grid">
+<div class="meta-card"><div class="k">实验日期</div><div class="v">2026-11-18</div></div><div class="meta-card"><div class="k">模型目录</div><div class="v">Desktop/综合航空保障仿真模型</div></div><div class="meta-card"><div class="k">执行通道</div><div class="v">Pi Web（riffoid-ir插件）→ sim-engine-compiler 0.1.0 → 浏览器运行时</div></div><div class="meta-card"><div class="k">结果性质</div><div class="v">浏览器本地执行结果（<code>local-unverified</code>），尚未经过独立验证，不属于Verified Experiment。</div></div>
+    </div>
+<h2 id="sec-1">一、 实验目的</h2>
+<p>本次实验基于当前已经封存、编译的综合航空保障仿真模型，在保持168小时仿真窗口不变的前提下，开展两组实验。</p>
+<ul><li>正常保障场景（实验A）：使用主模型执行正常任务调度，观察飞机出动、飞行、返场、保障作业及人员和设备资源使用情况。</li><li>故障维修场景（实验B）：使用模型中已有的压力测试模型，验证故障发生、故障定位、飞机返场、维修工单创建、维修调度、维修完成及飞机恢复可用的流程。</li><li>实验数据留存：保存Run ID、随机种子、Plan指纹、运行记录和事件日志，为后续实验分析与报告复核提供依据。</li></ul>
+<p>本次实验没有修改主模型的故障率、维修时间、人员数量、设备数量或任务调度规则，也没有扩展仿真时间。</p>
+<p>需要说明的是，本次没有实施B-1（扩展仿真窗口）和B-2（待命时间计入故障暴露），两项功能仍属于当前模型的限制。</p>
+<h2 id="sec-2">二、 原始自然语言需求与目标范围</h2>
+<p>本章节完整保留本次综合航空保障仿真模型建立之前提出的原始自然语言需求，作为模型设计目标和实验验收的需求基线。</p>
+<div class="callout">重要说明： 本章节描述的是原始目标需求，并不代表所有功能均已在当前模型中实现或得到运行时验证。各项功能的实际实现状态，以本报告后续的实验结果、模型限制和验证记录为准。不能仅凭需求已经写入模型配置、IR字段或Plan，就认定对应功能已经具备实际仿真能力。</div>
+<h3 id="sec-3">2.1 原始需求全文</h3>
+<h4 id="sub-17">综合航空保障仿真场景</h4>
+<p>建立一个航空保障仿真模型，模拟两个航空基地之间的飞机任务调度、设备故障、维修、人员调度和备件供应过程。</p>
+<h4 id="sub-19">1.基地与飞机</h4>
+<p>建立两个航空基地BASE-01和BASE-02，以及一个中央维修仓库DEPOT-01。</p>
+<p>BASE-01初始部署5架飞机：TEACH-AIR-01至TEACH-AIR-05。</p>
+<p>BASE-02初始部署3架飞机：TEACH-AIR-06至TEACH-AIR-08。</p>
+<p>所有飞机初始均处于可用状态，累计飞行时间为0。</p>
+<p>两个基地拥有各自的保障人员和备件库存，中央仓库负责复杂维修和备件供应。</p>
+<h4 id="sub-25">2.飞行任务</h4>
+<p>仿真周期为0至1032小时。</p>
+<p>飞机需要执行运输、侦察、保障支援和高风险任务。</p>
+<p>普通任务持续2小时，保障支援任务持续 4 小时，侦察任务持续 4 小时，高风险任务持续 6 小时。</p>
+<p>任务提前 1 小时通知，允许最多延迟 20 分钟。</p>
+<p>每 48 小时安排一个任务波次，每个波次计划使用 2 至 3 架飞机。部分任务需要多架飞机同时执行，部分任务可以由单架飞机执行。</p>
+<p>部分任务具有优先级和完成期限。如果可用飞机不足，低优先级任务可以等待，高优先级任务可以优先分配飞机。</p>
+<p>飞机完成任务后需要进行周转，普通任务周转时间为 1 小时，高风险任务周转时间为 1.5 小时。</p>
+<h4 id="sub-33">3. 航前准备与保障资源</h4>
+<p>飞机执行任务前需要完成检查、加油、设备装载和最终放飞检查。</p>
+<p>准备时间分别为 15、20、30 和 10 分钟。</p>
+<p>BASE-01 配备 2 名普通保障人员、1 名机械维修人员、2 名专业维修人员和 2 名地面技术人员。</p>
+<p>BASE-02 配备 1 名普通保障人员、1 名机械维修人员、1 名专业维修人员和 2 名地面技术人员。</p>
+<p>准备和维修工作需要占用相应人员。同一人员不能同时执行多个工作。</p>
+<p>正常工作时间为每天 07:45 至 17:00。夜间只有紧急维修可以安排人员工作。</p>
+<p>如果基地人员不足，可以从另一个基地调拨人员，调拨时间为 2 小时。</p>
+<h4 id="sub-41">4. 飞机设备</h4>
+<p>每架飞机包含雷达、通信、导航、电源、飞行控制和液压系统。</p>
+<p>雷达系统包含两个相同的雷达设备 RADAR-A 和 RADAR-B，正常情况下主雷达工作，备用雷达可以在主雷达故障后接替工作，切换时间为 30 分钟。两个雷达中至少一个正常，雷达系统即可工作。</p>
+<p>通信系统包含 COMM-A 和 COMM-B，部分任务要求两个设备同时正常。</p>
+<p>导航系统包含 NAV-A、NAV-B 和 NAV-C。普通任务要求至少一个导航设备正常，复杂任务要求至少两个正常，特殊任务要求 NAV-A 和 NAV-B 同时正常。</p>
+<p>电源、飞行控制和液压系统属于关键系统，关键设备故障可能导致飞机无法继续执行任务。</p>
+<h4 id="sub-47">5. 设备故障与可靠性参数</h4>
+<p>飞机设备在运行过程中可能发生随机故障。</p>
+<p>本模型统一采用以下设备可靠性参数。故障率已经换算为每小时故障率，仿真运行时直接使用表中数值，不需要再次换算。</p>
+<div class="table-wrap"><table><thead><tr><th>设备类型</th><th>平均故障间隔 MTBF（小时）</th><th>故障率 failure_rate_per_hour</th></tr></thead><tbody><tr><td>雷达 Radar</td><td>300,000</td><td>0.0000033333333333</td></tr><tr><td>通信 Comm</td><td>450,000</td><td>0.0000022222222222</td></tr><tr><td>导航 Nav</td><td>500,000</td><td>0.000002</td></tr><tr><td>电源 Power</td><td>1,000,000</td><td>0.000001</td></tr><tr><td>飞行控制 Flight Control</td><td>3,000,000</td><td>0.0000003333333333</td></tr><tr><td>液压 Hydraulic</td><td>3,000,000</td><td>0.0000003333333333</td></tr></tbody></table></div>
+<p>上述故障率均以小时为单位，表示对应设备每个工作小时的故障风险参数。</p>
+<p>每个物理设备实例必须独立使用自己的故障时钟和随机故障抽样，不同飞机上的同类型设备也必须独立抽样。</p>
+<p>故障时间采用指数分布模型。故障率作为运行参数直接传入可靠性执行逻辑。</p>
+<p>设备故障暴露时间必须覆盖任务执行期间和待命期间。设备处于正常工作或待命运行状态时，均应根据其实际工作状态累计故障暴露时间；设备停机维修期间暂停该设备的故障暴露时间。</p>
+<p>故障可能发生在任务执行过程中，也可能发生在待命期间。</p>
+<p>关键故障会导致任务中止，非关键故障允许飞机在满足任务要求的情况下继续执行任务。</p>
+<p>不同飞机上的同类型设备需要独立发生故障，并分别记录故障时间和故障影响。</p>
+<p>雷达、通信、导航、电源、飞行控制和液压系统必须分别维护故障状态，不能将不同系统的故障合并为同一个故障状态。</p>
+<h4 id="sub-59">6. RMS 维修管理与预防性维护</h4>
+<p>整个航空保障体系采用类似 RMS（可靠性与维修保障系统）的维修管理模式。维修不仅包括设备故障后的修复，还需要统一管理故障诊断、维修工单、维修等级、维修人员、维修资源、备件供应、维修过程和设备恢复使用。</p>
+<h4 id="sub-61">6.1 维修等级与维修机构</h4>
+<p class="lead">设置三个维修等级：</p>
+<ul><li>一级维修：由飞机所在基地完成，主要包括日常检查、故障排查、简单故障修复和部件更换。</li><li>二级维修：由 BASE-01 和 BASE-02 的专业维修人员完成，包括部件拆解、专业维修、故障诊断和功能测试。</li><li>三级维修：由 DEPOT-01 完成，包括复杂部件维修、深度修复和部件翻修。</li></ul>
+<p>不同维修地点具有不同的维修能力。超出当前基地维修能力的故障，需要将部件或飞机送往具备相应维修能力的地点。</p>
+<h4 id="sub-67">6.2 维修工单管理</h4>
+<p>飞机或设备发生故障，以及设备达到预防性维护期限时，都需要生成独立的维修工单。</p>
+<p>每张工单需要关联具体飞机和设备，并记录故障发现时间、故障类型、严重程度、维修优先级、所需维修等级、所需人员技能、维修设备、备件需求、预计维修时间和实际维修时间。</p>
+<p class="lead">维修工单具有以下状态：</p>
+<ul><li>待检查</li><li>待诊断</li><li>等待维修人员</li><li>等待维修设备</li><li>等待备件</li><li>等待运输</li><li>维修中</li><li>等待功能测试</li><li>维修完成</li><li>维修失败</li></ul>
+<p>同一架飞机可以存在多个维修工单，但需要根据飞机状态和设备之间的依赖关系决定维修安排。</p>
+<h4 id="sub-82">6.3 维修任务调度与资源分配</h4>
+<p>多架飞机同时发生故障时，维修工单进入维修队列。</p>
+<p>维修安排需要考虑故障严重程度、飞机任务优先级、飞机当前状态、维修等级、人员技能、维修设备和备件供应情况。</p>
+<p>维修人员必须具备对应的专业技能和维修授权。同一人员、工具或测试设备不能同时被多个维修任务占用。</p>
+<p>如果维修人员、设备或备件不足，工单应进入相应等待状态，并持续记录等待时间。</p>
+<p>BASE-01 和 BASE-02 可以相互申请维修人员支援。维修人员调拨需要考虑出发地点、运输时间和到达时间，调拨期间不能在原基地或目标基地重复使用。</p>
+<h4 id="sub-88">6.4 完整维修流程</h4>
+<p class="lead">每项维修工作需要经历以下过程：</p>
+<ul><li>发现飞机或设备故障。</li><li>创建维修工单。</li><li>维修人员进行检查和故障诊断。</li><li>根据故障情况确定维修等级和维修方案。</li><li>检查所需人员、工具、测试设备和备件是否可用。</li><li>执行部件拆卸。</li><li>进行直接维修、部件修复或更换。</li><li>完成部件安装。</li><li>进行系统检查和功能测试。</li><li>测试通过后恢复设备和飞机的可用状态。</li><li>更新维修工单、设备状态、维修历史和备件库存。</li></ul>
+<p>如果维修失败，需要重新诊断、再次维修或更换维修方案。</p>
+<p>如果维修完成但功能测试未通过，设备不能恢复可用状态。</p>
+<p>维修工单不能因为经过了预计维修时间就自动完成，必须满足实际维修和测试要求。</p>
+<h4 id="sub-104">6.5 可修复部件与部件更换</h4>
+<p>区分可修复部件和不可修复部件。</p>
+<p>可修复部件拆卸后可以送往 BASE-01、BASE-02 或 DEPOT-01 进行维修。维修完成并通过测试后，可以重新进入可用库存。</p>
+<p>不可修复部件需要报废，并产生新的备件需求。</p>
+<p>部件更换需要消耗相应备件。没有可用备件时，维修工单进入等待状态，不得直接完成更换。</p>
+<p>需要分别记录部件安装、拆卸、修复、更换和报废历史。</p>
+<h4 id="sub-110">6.6 维修时间与维修等待</h4>
+<p class="lead">所有维修时间统一使用分钟作为仿真内部时间单位。以下为已经统一后的维修时长：</p>
+<div class="table-wrap"><table><thead><tr><th>维修工作</th><th>原始维修时间</th><th>仿真维修时间</th></tr></thead><tbody><tr><td>雷达设备维修</td><td>12 小时</td><td>720 分钟</td></tr><tr><td>通信设备维修</td><td>4 小时</td><td>240 分钟</td></tr><tr><td>导航设备维修</td><td>8 小时</td><td>480 分钟</td></tr><tr><td>普通设备检查</td><td>30 分钟</td><td>30 分钟</td></tr><tr><td>部件拆卸</td><td>10 分钟</td><td>10 分钟</td></tr><tr><td>部件安装</td><td>20 分钟</td><td>20 分钟</td></tr><tr><td>LRU 更换</td><td>45 分钟</td><td>45 分钟</td></tr><tr><td>通用部件更换</td><td>1.5 小时</td><td>90 分钟</td></tr><tr><td>维修后功能测试</td><td>30 分钟</td><td>30 分钟</td></tr></tbody></table></div>
+<p>雷达、通信和导航的维修时长分别为 720、240、480 分钟。上述数值是实际维修工作时间，不包含等待维修人员、工具、备件、运输和测试设备的时间。</p>
+<p>电源、飞行控制和液压系统的具体维修时长尚未提供，不得擅自套用其他设备的维修时长。应根据当前模型实际支持的维修配置表达，并明确标记待配置参数。</p>
+<p>需要分别记录故障发生到维修开始的时间、实际维修工时、维修等待时间、维修后测试时间以及故障发生到恢复使用的总时间。</p>
+<h4 id="sub-116">6.7 预防性维护与部件寿命管理</h4>
+<p>所有飞机每运行 24 小时需要进行一次基础检查，雷达设备每累计工作 24 小时需要进行一次周期性维护。</p>
+<p>其他关键部件也具有各自的工作时间和寿命限制。</p>
+<p>达到维护周期时，需要自动产生预防性维护计划和维修工单，并安排相应人员和设备。</p>
+<p>预防性维护需要与飞机任务计划协调。如果维护工作与飞行任务冲突，应根据飞机当前状态和维护要求重新安排任务或维护时间。</p>
+<p>部件达到寿命限制后，必须进行规定的维修或更换，不能继续无限使用。</p>
+<p>维修完成后需要更新部件累计工作时间和剩余寿命，同时保留原有故障和维修历史。</p>
+<h4 id="sub-123">6.8 维修记录与可靠性指标</h4>
+<p>整个仿真过程中，需要持续保存飞机、部件和维修工单的历史记录。</p>
+<p class="lead">最终统计以下维修保障指标：</p>
+<ul><li>各类设备故障次数。</li><li>平均故障间隔时间 MTBF。</li><li>平均修复时间 MTTR。</li><li>平均维修等待时间。</li><li>维修工单数量及完成率。</li><li>等待人员、设备和备件的工单数量。</li><li>各维修等级的工作量和完成情况。</li><li>维修人员和测试设备利用率。</li><li>可修复部件的返修率。</li><li>飞机及设备可用率。</li><li>预防性维护计划完成率。</li><li>因维修保障不足造成的飞机不可用时间。</li></ul>
+<p>理论 MTBF 和实际观测 MTBF 必须区分。理论 MTBF 来自第五部分的可靠性参数，实际观测 MTBF 根据仿真过程中记录的故障时间计算。</p>
+<p>MTTR 只统计实际维修时间；维修等待时间单独统计。故障发生到恢复使用的总时间还需要包含维修等待、运输、维修和功能测试等时间，不得将这些指标混为一谈。</p>
+<h4 id="sub-140">7. 备件库存与补给</h4>
+<p>BASE-01 初始拥有 1 个雷达备件、1 个通信备件和 1 个导航备件。</p>
+<p>BASE-02 初始拥有 1 个雷达备件、1 个导航备件，没有通信备件。</p>
+<p>DEPOT-01 初始拥有 4 个雷达备件、2 个通信备件和 2 个导航备件。</p>
+<p>基地备件库存低于 2 个时产生补货请求，每次补货 2 个，采购提前期为 16 小时。</p>
+<p>BASE-01 与 DEPOT-01 之间的运输时间为 2 小时，BASE-02 与 DEPOT-01 之间为 3 小时，两个基地之间为 30 分钟。</p>
+<p>维修更换下来的部件如果可以修复，应当重新进入库存；无法修复的部件需要报废。</p>
+<p>备件运输期间不能被其他基地使用。仿真结束时尚未到达的备件应保留在运输途中。</p>
+<h4 id="sub-148">8. 高风险任务与损伤</h4>
+<p>高风险任务可能造成飞机设备损伤，基础损伤概率为 0.5，部分特殊任务的损伤概率为 1。</p>
+<p>损伤有 50% 的概率可以修复，其余情况需要更换部件。</p>
+<p>损伤可能导致设备失效、任务中止或飞机返场维修。</p>
+<p>损伤事件与普通设备故障分别记录。</p>
+<h4 id="sub-153">9. 飞机和资源调拨</h4>
+<p>在仿真运行过程中，安排 TEACH-AIR-01 从 BASE-01 调拨到 BASE-02，安排一名专业维修人员从 BASE-01 支援 BASE-02，并从 DEPOT-01 向 BASE-02 运送一个雷达备件。</p>
+<p>调拨发生在仿真运行期间，调拨中的飞机、人员和备件不能同时在原地点和目标地点使用。</p>
+<h4 id="sub-156">10. 仿真参数变化</h4>
+<p>在仿真运行到第 240 小时时，将雷达设备维修时间从 12 小时调整为 8 小时，即将雷达维修时间从 720 分钟调整为 480 分钟。</p>
+<p>在第 480 小时时，将普通任务周转时间从 1 小时调整为 1.5 小时，即从 60 分钟调整为 90 分钟。</p>
+<p>参数调整只影响调整之后发生的工作，不应改变已经完成的任务、正在进行的维修和已经发生的故障。</p>
+<h4 id="sub-160">11. 仿真结果</h4>
+<p>请记录整个仿真过程中的任务通知、任务预约、飞机准备、起飞、返场、任务完成、任务取消、故障发生、维修工单创建、维修诊断、维修开始和结束、功能测试、备件申请、备件到达、资源占用和释放、飞机及人员调拨等事件。</p>
+<p class="lead">最终统计：</p>
+<ul><li>每架飞机的任务次数、飞行小时和可用时间。</li><li>各类任务的完成率、延误率、中止率和取消率。</li><li>各类设备的故障次数和可靠性表现。</li><li>飞机维修时间及维修等待时间。</li><li>MTBF、MTTR 和维修工单完成率。</li><li>各维修等级的工作量和维修能力利用情况。</li><li>各基地备件库存、缺货次数和在途物资。</li><li>人员和保障设备利用率。</li><li>雷达冗余和导航设备组合对飞机可用性的影响。</li><li>预防性维护完成情况。</li><li>不同基地之间调拨对整体保障能力的影响。</li></ul>
+<h3 id="sec-4">2.2 原始需求与本次实验的关系</h3>
+<p>原始需求定义的是一个覆盖任务调度、可靠性、维修保障、人员管理、备件供应、资源调拨、预防性维护和动态参数调整的综合航空保障仿真系统。</p>
+<p>本次实验并未完成全部原始需求，而是在当前 Compiler、Plan 和 Browser Runtime 能力范围内，对其中一部分业务进行实际运行验证。</p>
+<p class="lead">本次实验的范围和边界如下：</p>
+<div class="table-wrap"><table><thead><tr><th>原始需求领域</th><th>本次实验涉及情况</th></tr></thead><tbody><tr><td>两个航空基地、8 架飞机</td><td>已建立并进入本次模型</td></tr><tr><td>中央维修仓库 DEPOT-01</td><td>尚未形成完整仓库维修与供应链运行验证</td></tr><tr><td>1032 小时仿真周期</td><td>本次仅运行 168 小时</td></tr><tr><td>多类型飞行任务</td><td>已配置并执行 10 个任务</td></tr><tr><td>多机协同任务</td><td>本次没有验证</td></tr><tr><td>航前准备和航后周转</td><td>已有实际运行记录</td></tr><tr><td>人员技能、工作时间和夜间维修</td><td>尚未完整实现和验证</td></tr><tr><td>六类飞机设备系统</td><td>已配置</td></tr><tr><td>独立实例故障与组内冗余</td><td>已观察到部分系统的实际故障和冗余行为</td></tr><tr><td>待命期间故障暴露</td><td>尚未实现，本次仅采用飞行期间故障暴露</td></tr><tr><td>RMS 多等级维修体系</td><td>尚未完整实现</td></tr><tr><td>维修工单及串行维修</td><td>已观察到简化维修流程</td></tr><tr><td>拆卸、安装、功能测试和维修失败重试</td><td>尚未形成完整运行验证</td></tr><tr><td>备件库存、采购与运输</td><td>尚未实现完整运行验证</td></tr><tr><td>预防性维护与寿命管理</td><td>尚未实现</td></tr><tr><td>高风险任务损伤</td><td>尚未实现</td></tr><tr><td>飞机、人员和备件调拨</td><td>尚未实现</td></tr><tr><td>第 240、480 小时动态参数变化</td><td>尚未实现</td></tr><tr><td>完整维修与可靠性统计</td><td>仅实现并验证了当前模型支持的部分指标</td></tr></tbody></table></div>
+<p class="lead">因此，本报告应同时保留两类信息：</p>
+<ul><li>需求基线： 原始自然语言需求中提出的完整目标。</li><li>实验事实： 本次模型实际配置、编译和运行所能证明的能力。</li></ul>
+<p>后续模型开发和验收应以原始需求为目标，以实际运行记录作为功能完成的证据。对于尚未实现或尚未验证的功能，应继续明确标记，不得提前认定为已完成。</p>
+<h2 id="sec-5">三、 实验环境与模型版本</h2>
+<h3 id="sec-6">3.1 模型及编译信息</h3>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>值</th></tr></thead><tbody><tr><td>主模型业务源</td><td>model/business-ir.draft.json</td></tr><tr><td>主模型业务指纹</td><td>ce1fa7cf3db35ee3a73133469ea815590e5d2370bfc42723067b661d638d9ebd</td></tr><tr><td>主模型 Plan 指纹</td><td>c434bed916c3ccca0b0e6abbf3f0ca7f0ba8eb93aa0224634ac704c440810cf2</td></tr><tr><td>压力测试模型</td><td>model/business-ir.stress.draft.json</td></tr><tr><td>压力模型业务指纹</td><td>cd3e08cb4230d01c319110b48550e3256ef5479e941209a474291c459f89b767</td></tr><tr><td>压力模型 Plan 指纹</td><td>8b8095bb90cd58983bf78eb1db4ad462685d2f47225c35df976e73c90844eb42</td></tr><tr><td>Business IR</td><td>aircraft-business-ir/v1</td></tr><tr><td>Core IR</td><td>simulation-core-ir/v2</td></tr><tr><td>Plan</td><td>aircraft-support-plan/v1alpha2</td></tr><tr><td>编译器</td><td>sim-engine-compiler 0.1.0</td></tr><tr><td>领域包</td><td>aircraft-support-pack/v0.1</td></tr><tr><td>插件版本</td><td>0.3.1</td></tr><tr><td>浏览器运行时</td><td>aircraft-support-browser/0.5.0</td></tr><tr><td>Runtime SHA256</td><td>430bc4a069ece729efb71cb6af6074a02de4b2b53f1eae5cb784fbeda75b9ce7</td></tr><tr><td>执行位置</td><td>user-browser</td></tr><tr><td>验证状态</td><td><code>local-unverified</code></td></tr></tbody></table></div>
+<p class="lead">语义配置：</p>
+<pre class="code-block"><code>legacy-minute-v1
+resource_dispatch_index=absent
+rng=legacy-sequential-v1
+work=stable-topological-serial</code></pre>
+<h3 id="sec-7">3.2 不可变产物引用</h3>
+<p>以下产物位于工作区 .riffoid-ir/ 中。</p>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>实验 A</th><th>实验 B</th></tr></thead><tbody><tr><td>Sealed 模型</td><td>.riffoid-ir/models/9162db59…7f09/business.json</td><td>.riffoid-ir/models/18720927…e3e6/business.json</td></tr><tr><td>编译包</td><td>.riffoid-ir/bundles/02945db2…3354/model.simpack</td><td>.riffoid-ir/bundles/e7c93981…f1f4/model.simpack</td></tr><tr><td>浏览器产物</td><td>.riffoid-ir/artifacts/640b757e…b9d5/browser.json</td><td>.riffoid-ir/artifacts/3325fcad…cd38/browser.json</td></tr><tr><td>运行时快照</td><td>.riffoid-ir/runtimes/430bc4a0…9ce7/runtime.js</td><td>同左</td></tr></tbody></table></div>
+<p>主模型和压力测试模型分别经过 Check、Compile，生成对应的封存模型、编译包和浏览器执行产物。</p>
+<p>本次两组实验的业务指纹和 Plan 指纹与对应归档记录一致，说明实验使用的是各自对应的模型版本。实验 B 使用独立的压力测试模型，不与实验 A 的主模型结果混合统计。</p>
+<h2 id="sec-8">四、实验参数</h2>
+<h3 id="sec-9">4.1 仿真时间与随机数</h3>
+<div class="table-wrap"><table><thead><tr><th>参数</th><th>值</th></tr></thead><tbody><tr><td>仿真时长</td><td>10080 分钟，即 168 小时</td></tr><tr><td>随机种子</td><td>20251118</td></tr><tr><td>任务波次</td><td>4 波</td></tr><tr><td>计划起飞日期</td><td>第 1、3、5、7 天 08:00</td></tr><tr><td>停止原因</td><td>duration</td></tr></tbody></table></div>
+<p>两组实验使用相同的随机种子，以便记录本次实验的执行条件。随机数序列仍受到各模型结构和事件消耗顺序影响，因此不能将两组实验视为完全相同条件下仅改变一个变量的严格配对实验。</p>
+<h3 id="sec-10">4.2 机队与基地</h3>
+<div class="table-wrap"><table><thead><tr><th>基地</th><th>飞机编号</th><th>飞机数量</th><th>机型</th></tr></thead><tbody><tr><td>BASE-01</td><td>TEACH-AIR-01 至 TEACH-AIR-05</td><td>5</td><td>BASE01-AIR</td></tr><tr><td>BASE-02</td><td>TEACH-AIR-06 至 TEACH-AIR-08</td><td>3</td><td>BASE02-AIR</td></tr><tr><td>合计</td><td></td><td>8</td><td></td></tr></tbody></table></div>
+<p class="lead">人员与设备容量：</p>
+<div class="table-wrap"><table><thead><tr><th>基地</th><th>人员容量</th><th>设备容量</th></tr></thead><tbody><tr><td>BASE-01</td><td>7</td><td>9</td></tr><tr><td>BASE-02</td><td>5</td><td>7</td></tr></tbody></table></div>
+<p>当前模型将每个基地的人员和地面保障设备分别作为统一资源池处理，尚未实现人员技能匹配和设备类型匹配。</p>
+<h3 id="sec-11">4.3 任务计划</h3>
+<p>本次共设置 10 个架次，分为 4 个任务波次。</p>
+<div class="table-wrap"><table><thead><tr><th>波次</th><th>计划起飞</th><th>基地</th><th>任务类型</th><th>时长（min）</th><th>优先级</th></tr></thead><tbody><tr><td>W1</td><td>D1 08:00</td><td>BASE-01</td><td>运输</td><td>120</td><td>2</td></tr><tr><td>W1</td><td>D1 08:00</td><td>BASE-01</td><td>运输</td><td>120</td><td>2</td></tr><tr><td>W1</td><td>D1 08:00</td><td>BASE-02</td><td>侦察</td><td>240</td><td>2</td></tr><tr><td>W2</td><td>D3 08:00</td><td>BASE-01</td><td>保障支援</td><td>240</td><td>3</td></tr><tr><td>W2</td><td>D3 08:00</td><td>BASE-02</td><td>高风险</td><td>360</td><td>1</td></tr><tr><td>W3</td><td>D5 08:00</td><td>BASE-01</td><td>侦察</td><td>240</td><td>2</td></tr><tr><td>W3</td><td>D5 08:00</td><td>BASE-01</td><td>高风险</td><td>360</td><td>1</td></tr><tr><td>W3</td><td>D5 08:00</td><td>BASE-02</td><td>运输</td><td>120</td><td>2</td></tr><tr><td>W4</td><td>D7 08:00</td><td>BASE-01</td><td>高风险</td><td>360</td><td>1</td></tr><tr><td>W4</td><td>D7 08:00</td><td>BASE-02</td><td>保障支援</td><td>240</td><td>3</td></tr></tbody></table></div>
+<h3 id="sec-12">4.4 保障作业参数</h3>
+<p class="lead">飞行前保障：</p>
+<div class="table-wrap"><table><thead><tr><th>作业</th><th>时间</th></tr></thead><tbody><tr><td>CHECK</td><td>15 min</td></tr><tr><td>REFUEL</td><td>20 min</td></tr><tr><td>LOAD</td><td>30 min</td></tr><tr><td>RELEASE</td><td>10 min</td></tr><tr><td>合计</td><td>75 min</td></tr></tbody></table></div>
+<p>飞行前保障提前 60 分钟开始，因此计划 08:00 起飞的飞机最早于 08:15 起飞。</p>
+<p class="lead">飞行后保障：</p>
+<ul><li>普通任务周转：60 分钟。</li><li>高风险任务周转：90 分钟。</li></ul>
+<p>每个保障作业步骤配置 1 名人员和 1 个设备单位。</p>
+<p>任务取消判据为 20 分钟：若到达相应起飞判断时刻仍无可用飞机，则按模型规则处理取消。</p>
+<h3 id="sec-13">4.5 六系统可靠性与维修参数</h3>
+<div class="table-wrap"><table><thead><tr><th>系统</th><th>实例数量</th><th>冗余配置</th><th>单实例 MTBF（h）</th><th>单实例故障率（/h）</th><th>单次维修时间（min）</th></tr></thead><tbody><tr><td>雷达 Radar</td><td>2</td><td>1-of-2</td><td>15,500</td><td>6.452e-05</td><td>720</td></tr><tr><td>通信 Comm</td><td>2</td><td>1-of-2</td><td>23,250</td><td>4.301e-05</td><td>240</td></tr><tr><td>导航 Nav</td><td>3</td><td>1-of-3</td><td>25,850</td><td>3.868e-05</td><td>480</td></tr><tr><td>电源 Power</td><td>1</td><td>1-of-1</td><td>51,700</td><td>1.934e-05</td><td>240</td></tr><tr><td>飞控 Flight Control</td><td>1</td><td>1-of-1</td><td>155,000</td><td>6.45e-06</td><td>480</td></tr><tr><td>液压 Hydraulic</td><td>1</td><td>1-of-1</td><td>155,000</td><td>6.45e-06</td><td>360</td></tr></tbody></table></div>
+<p>这里的故障率是单个实例的故障率。按照各系统实例数量，将所有实例的故障率相加，得到整架飞机所有实例的合计故障率约为：</p>
+<p>0.00036334 次故障 / 飞机小时。</p>
+<p>该合计值用于本次实验的期望故障次数估算，不代表每一个系统组自身的故障率。</p>
+<h3 id="sec-14">4.6 压力测试模型</h3>
+<p>实验 B 使用模型包中已有的压力测试模型，作为维修链路验证夹具。</p>
+<p class="lead">与主模型相比，本次压力测试模型的主要变化是：</p>
+<ul><li>六套系统的单实例故障率统一放大 300 倍。</li><li>维修时间保持不变。</li><li>人员和设备数量保持不变。</li><li>任务计划保持不变。</li><li>调度规则保持不变。</li></ul>
+<p class="lead">压力模型所有实例的合计故障率约为：</p>
+<p>0.109002 次故障 / 飞机小时。</p>
+<p>压力测试模型的用途是增加 168 小时内的故障观测机会，以验证故障和维修流程。</p>
+<p>压力测试模型不用于评价真实可靠性水平，也不能用其故障次数推断实际飞机的 MTBF。</p>
+<h2 id="sec-15">五、实验执行过程</h2>
+<p>本次实验通过 Pi Web 插件的正常工作流执行。</p>
+<ul><li>核对工作区草稿与模型目录中的主模型草稿，确认内容一致。</li><li>执行 <code>project_ir_check</code>，完成主模型 Check/Seal。</li><li>执行 <code>project_ir_compile</code>，生成主模型编译包和浏览器执行产物。</li><li>执行 <code>project_ir_run</code>，使用随机种子 20251118 运行主模型。</li><li>执行 <code>project_ir_result</code>，读取实验 A 的完整运行结果。</li><li>将压力测试模型草稿放入工作区，按相同的 Check → Compile → Run → Result 流程执行实验 B。</li><li>使用 <code>build/analyze_experiment.py</code>，根据保存的运行记录和 Plan 快照重新计算统计结果。</li><li>将本次实验数据写入独立结果目录，保留此前的历史运行记录。</li></ul>
+<p class="lead">两次运行的基本信息：</p>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>实验 A：主模型</th><th>实验 B：压力模型</th></tr></thead><tbody><tr><td>Run ID</td><td>run-7730c839-5dc1-4d52-8df4-ac5f584749c0</td><td>run-071a0312-52e3-4472-b785-1e91e71841d6</td></tr><tr><td>状态</td><td>succeeded</td><td>succeeded</td></tr><tr><td>随机种子</td><td>20251118</td><td>20251118</td></tr><tr><td>事件条数</td><td>201</td><td>231</td></tr><tr><td>记录创建时间（UTC）</td><td>2026-11-18 02:38:33.758</td><td>2026-11-18 02:39:28.822</td></tr><tr><td>记录完成时间（UTC）</td><td>2026-11-18 02:38:34.197</td><td>2026-11-18 02:39:29.200</td></tr><tr><td>结果目录</td><td><code>results/expA-main-20261118/</code></td><td><code>results/expB-stress-20261118/</code></td></tr></tbody></table></div>
+<p>两次运行均正常结束，停止原因是仿真时长到达。</p>
+<h2 id="sec-16">六、实验 A：正常保障场景</h2>
+<h3 id="sec-17">6.1 总体运行结果</h3>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>结果</th></tr></thead><tbody><tr><td>计划架次</td><td>10</td></tr><tr><td>实际起飞架次</td><td>10</td></tr><tr><td>正常返场架次</td><td>10</td></tr><tr><td>任务成功点数</td><td>10</td></tr><tr><td>取消架次</td><td>0</td></tr><tr><td>延误架次</td><td>10</td></tr><tr><td>每架次延误</td><td>15 min</td></tr><tr><td>设备故障次数（LRU）</td><td>0</td></tr><tr><td>空中故障导致的任务中止</td><td>0</td></tr><tr><td>维修工单</td><td>0</td></tr><tr><td>累计飞行时间</td><td>40.0 h</td></tr><tr><td>维修停机时间</td><td>0 min</td></tr><tr><td>按维修停机口径计算的可用率</td><td>1.000000</td></tr></tbody></table></div>
+<p>本次主模型运行期间没有发生任何 <code>component_failed</code> 事件，也没有产生维修工单。</p>
+<p>这一结果与当前故障暴露机制和任务强度相符。</p>
+<p class="lead">本次累计飞行时间为 40 飞机小时，按照整架飞机所有实例的合计故障率估算：</p>
+<p>40 × 0.00036334 ≈ 0.0145 次期望故障。</p>
+<p>因此，本次出现零故障并不代表系统不会发生故障，而是当前较短的飞行暴露时间下可能出现的随机结果。</p>
+<h3 id="sec-18">6.2 任务调度情况</h3>
+<div class="table-wrap"><table><thead><tr><th>波次</th><th>任务类型</th><th>基地</th><th>飞机</th><th>计划起飞</th><th>实际起飞</th><th>延误</th><th>返场</th><th>飞行时间</th></tr></thead><tbody><tr><td>W1</td><td>运输</td><td>BASE-01</td><td>TEACH-AIR-01</td><td>D1 08:00</td><td>D1 08:15</td><td>15</td><td>D1 10:15</td><td>120 min</td></tr><tr><td>W1</td><td>运输</td><td>BASE-01</td><td>TEACH-AIR-02</td><td>D1 08:00</td><td>D1 08:15</td><td>15</td><td>D1 10:15</td><td>120 min</td></tr><tr><td>W1</td><td>侦察</td><td>BASE-02</td><td>TEACH-AIR-06</td><td>D1 08:00</td><td>D1 08:15</td><td>15</td><td>D1 12:15</td><td>240 min</td></tr><tr><td>W2</td><td>保障支援</td><td>BASE-01</td><td>TEACH-AIR-01</td><td>D3 08:00</td><td>D3 08:15</td><td>15</td><td>D3 12:15</td><td>240 min</td></tr><tr><td>W2</td><td>高风险</td><td>BASE-02</td><td>TEACH-AIR-06</td><td>D3 08:00</td><td>D3 08:15</td><td>15</td><td>D3 14:15</td><td>360 min</td></tr><tr><td>W3</td><td>侦察</td><td>BASE-01</td><td>TEACH-AIR-02</td><td>D5 08:00</td><td>D5 08:15</td><td>15</td><td>D5 12:15</td><td>240 min</td></tr><tr><td>W3</td><td>高风险</td><td>BASE-01</td><td>TEACH-AIR-01</td><td>D5 08:00</td><td>D5 08:15</td><td>15</td><td>D5 14:15</td><td>360 min</td></tr><tr><td>W3</td><td>运输</td><td>BASE-02</td><td>TEACH-AIR-06</td><td>D5 08:00</td><td>D5 08:15</td><td>15</td><td>D5 10:15</td><td>120 min</td></tr><tr><td>W4</td><td>高风险</td><td>BASE-01</td><td>TEACH-AIR-01</td><td>D7 08:00</td><td>D7 08:15</td><td>15</td><td>D7 14:15</td><td>360 min</td></tr><tr><td>W4</td><td>保障支援</td><td>BASE-02</td><td>TEACH-AIR-06</td><td>D7 08:00</td><td>D7 08:15</td><td>15</td><td>D7 12:15</td><td>240 min</td></tr></tbody></table></div>
+<p>实验 A 中，10 个架次全部成功派出并正常返场，所有任务成功点均达成。</p>
+<p>全部架次延误 15 分钟，原因是飞行前保障需要 75 分钟，而模型仅提前 60 分钟开始准备。因此最早起飞时刻为 08:15。</p>
+<p>这一延误属于模型时间参数造成的确定性结果，不是人员或设备资源竞争造成的。</p>
+<h3 id="sec-19">6.3 各飞机任务执行情况</h3>
+<div class="table-wrap"><table><thead><tr><th>飞机</th><th>基地</th><th>架次</th><th>飞行时间</th><th>执行波次</th><th>故障</th><th>工单</th><th>最终状态</th></tr></thead><tbody><tr><td>TEACH-AIR-01</td><td>BASE-01</td><td>4</td><td>1080 min</td><td>W1/W2/W3/W4</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-02</td><td>BASE-01</td><td>2</td><td>360 min</td><td>W1/W3</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-03</td><td>BASE-01</td><td>0</td><td>0 min</td><td>—</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-04</td><td>BASE-01</td><td>0</td><td>0 min</td><td>—</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-05</td><td>BASE-01</td><td>0</td><td>0 min</td><td>—</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-06</td><td>BASE-02</td><td>4</td><td>960 min</td><td>W1/W2/W3/W4</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-07</td><td>BASE-02</td><td>0</td><td>0 min</td><td>—</td><td>无</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-08</td><td>BASE-02</td><td>0</td><td>0 min</td><td>—</td><td>无</td><td>0</td><td><code>available</code></td></tr></tbody></table></div>
+<p>可以看到，虽然模型配置了 8 架飞机，但本次实际出动的只有 TEACH-AIR-01、TEACH-AIR-02 和 TEACH-AIR-06 三架。</p>
+<p>其余五架飞机在本次运行中没有被派出。这是当前任务分配和可用飞机选择机制产生的结果，并不表示这些飞机无法执行任务。</p>
+<h3 id="sec-20">6.4 故障情况</h3>
+<p class="lead">运行记录中以下事件均为 0：</p>
+<ul><li><code>component_failed</code></li><li><code>aircraft_failed</code></li><li><code>mission_returned_with_component_failure</code></li></ul>
+<p>当前模型采用 legacy 故障暴露语义，故障时钟只在飞行过程中累计，待命时间不计入故障暴露。</p>
+<p>本次累计飞行时间为 2400 分钟。</p>
+<p>运行终态记录的实例暴露分钟合计为 2390 分钟，与飞行时间统计相差 10 分钟。由于现有统计结果不足以完整解释这一差异，本报告保留两项原始统计值，不将差异直接归因于时间边界处理。后续如需精确核对，应对照原始事件和各实例状态变化记录。</p>
+<h3 id="sec-21">6.5 维修与保障资源</h3>
+<p class="lead">由于本次没有发生故障，因此：</p>
+<ul><li>维修工单数量为 0。</li><li>维修人员和设备没有产生维修占用。</li><li>没有维修等待任务。</li><li>飞机没有遗留故障。</li></ul>
+<h3 id="sec-22">6.6 人员与设备使用情况</h3>
+<div class="table-wrap"><table><thead><tr><th>基地</th><th>人员容量</th><th>人员占用（min）</th><th>人员利用率</th><th>设备容量</th><th>设备占用（min）</th><th>设备利用率</th></tr></thead><tbody><tr><td>BASE-01</td><td>7</td><td>870</td><td>1.233%</td><td>9</td><td>870</td><td>0.959%</td></tr><tr><td>BASE-02</td><td>5</td><td>570</td><td>1.131%</td><td>7</td><td>570</td><td>0.808%</td></tr></tbody></table></div>
+<p class="lead">利用率按以下公式计算：</p>
+<div class="formula">利用率 = 占用分钟 /（资源容量 × 10080）</div>
+<p>占用分钟由已完成作业步骤的持续时间及其人员、设备需求推导。</p>
+<p class="lead">本次两基地均没有出现资源等待。峰值并发分别为：</p>
+<ul><li>BASE-01：2 名人员、2 个设备单位。</li><li>BASE-02：1 名人员、1 个设备单位。</li></ul>
+<p>因此，本次正常场景没有观察到人员或设备容量不足的情况。</p>
+<h3 id="sec-23">6.7 实验 A 终态</h3>
+<ul><li>8 架飞机全部处于 <code>available</code> 状态。</li><li>所有飞机均没有遗留故障实例。</li><li>两个基地人员和设备的在用数量均为 0。</li><li>没有遗留维修工单。</li></ul>
+<h2 id="sec-24">7. 实验 B：故障与维修调度验证</h2>
+<p>实验 B 使用压力测试模型，故障率统一放大 300 倍，目的是增加故障事件数量，观察故障和维修流程。</p>
+<p>本实验结果与实验 A 分开保存，不用于评价真实可靠性水平。</p>
+<h3 id="sec-25">7.1 总体运行结果</h3>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>结果</th></tr></thead><tbody><tr><td>计划架次</td><td>10</td></tr><tr><td>实际起飞架次</td><td>10</td></tr><tr><td>正常返场架次</td><td>6</td></tr><tr><td>带故障实例返场架次</td><td>4</td></tr><tr><td>空中故障导致的任务中止</td><td>0</td></tr><tr><td>任务成功点数</td><td>10</td></tr><tr><td>取消架次</td><td>0</td></tr><tr><td>延误架次</td><td>10</td></tr><tr><td>每架次延误</td><td>15 min</td></tr><tr><td>LRU 故障次数</td><td>5</td></tr><tr><td>维修工单数量</td><td>5</td></tr><tr><td>完成工单数量</td><td>5</td></tr><tr><td>平均维修时间（MTTR）</td><td>432 min</td></tr><tr><td>维修等待总时长</td><td>0 min</td></tr><tr><td>维修停机总时间</td><td>2160 min</td></tr><tr><td>按维修停机口径计算的可用率</td><td>0.973214</td></tr></tbody></table></div>
+<p class="lead">故障分布：</p>
+<div class="table-wrap"><table><thead><tr><th>系统</th><th>故障次数</th></tr></thead><tbody><tr><td>导航 Nav</td><td>2</td></tr><tr><td>通信 Comm</td><td>2</td></tr><tr><td>雷达 Radar</td><td>1</td></tr><tr><td>合计</td><td>5</td></tr></tbody></table></div>
+<p class="lead">按基地统计：</p>
+<ul><li>BASE-01：4 次。</li><li>BASE-02：1 次。</li></ul>
+<p>本次共发生 5 次实例故障，生成 5 张维修工单，全部完成。</p>
+<h3 id="sec-26">7.2 故障事件明细</h3>
+<div class="table-wrap"><table><thead><tr><th>序号</th><th>故障时刻</th><th>飞机</th><th>基地</th><th>系统</th><th>故障实例</th><th>发生时任务</th><th>飞机是否继续任务</th><th>返场时间</th></tr></thead><tbody><tr><td>1</td><td>D1 08:52</td><td>TEACH-AIR-06</td><td>BASE-02</td><td>Nav</td><td>base02-nav-nav-c</td><td>W1 侦察</td><td>是</td><td>D1 12:15</td></tr><tr><td>2</td><td>D5 08:26</td><td>TEACH-AIR-02</td><td>BASE-01</td><td>Nav</td><td>base01-nav-nav-c</td><td>W3 侦察</td><td>是</td><td>D5 12:15</td></tr><tr><td>3</td><td>D5 10:30</td><td>TEACH-AIR-02</td><td>BASE-01</td><td>Radar</td><td>base01-radar-radar-b</td><td>W3 侦察</td><td>是</td><td>D5 12:15</td></tr><tr><td>4</td><td>D5 13:01</td><td>TEACH-AIR-01</td><td>BASE-01</td><td>Comm</td><td>base01-comm-comm-a</td><td>W3 高风险</td><td>是</td><td>D5 14:15</td></tr><tr><td>5</td><td>D7 10:57</td><td>TEACH-AIR-01</td><td>BASE-01</td><td>Comm</td><td>base01-comm-comm-a</td><td>W4 高风险</td><td>是</td><td>D7 14:15</td></tr></tbody></table></div>
+<p class="lead">故障事件对应的工单：</p>
+<div class="table-wrap"><table><thead><tr><th>故障</th><th>对应工单</th></tr></thead><tbody><tr><td>TEACH-AIR-06 导航故障</td><td>job-0006</td></tr><tr><td>TEACH-AIR-02 导航故障</td><td>job-0016</td></tr><tr><td>TEACH-AIR-02 雷达故障</td><td>job-0019</td></tr><tr><td>TEACH-AIR-01 通信故障（第一次）</td><td>job-0017</td></tr><tr><td>TEACH-AIR-01 通信故障（第二次）</td><td>job-0024</td></tr></tbody></table></div>
+<div class="callout">需要注意，雷达故障虽然发生在 D5 10:30，但对应的维修工单直到 D5 20:15 才开始处理。这是因为同一架飞机的导航维修先行处理，雷达维修在导航维修完成后接续执行。</div>
+<h3 id="sec-27">7.3 故障期间的任务表现</h3>
+<p>本次 5 次故障均发生在飞行过程中。</p>
+<p>但由于导航、通信和雷达系统配置了组内冗余，单个实例失效后，系统仍然满足当前配置的可用条件。</p>
+<p class="lead">因此：</p>
+<ul><li>故障发生后，飞机没有因为单个实例失效而立即中止任务。</li><li>4 个受到故障影响的架次继续执行并正常完成飞行。</li><li>4 个架次返场时携带故障实例。</li><li>10 个任务成功点全部达成。</li><li><code>in_flight_failures</code>=0，没有发生因系统失效导致的空中任务中止。</li></ul>
+<p class="lead">这里需要区分三个指标：</p>
+<ul><li><code>component_failed</code>：表示某个具体设备实例发生故障。</li><li><code>mission_returned_with_component_failure</code>：表示飞机带着故障实例返场。</li><li><code>mission_failed_returned</code>：表示因故障导致任务中止或失败返场。</li></ul>
+<p>本次发生了实例故障和带故障返场，但没有发生空中故障导致的任务中止。</p>
+<h3 id="sec-28">7.4 维修工单明细</h3>
+<div class="table-wrap"><table><thead><tr><th>工单</th><th>飞机</th><th>维修项目</th><th>建单时间</th><th>开工时间</th><th>完工时间</th><th>等待时间</th><th>维修时间</th><th>状态</th></tr></thead><tbody><tr><td>job-0006</td><td>TEACH-AIR-06</td><td>导航维修</td><td>D1 12:15</td><td>D1 12:15</td><td>D1 20:15</td><td>0</td><td>480 min</td><td>完成</td></tr><tr><td>job-0016</td><td>TEACH-AIR-02</td><td>导航维修</td><td>D5 12:15</td><td>D5 12:15</td><td>D5 20:15</td><td>0</td><td>480 min</td><td>完成</td></tr><tr><td>job-0019</td><td>TEACH-AIR-02</td><td>雷达维修</td><td>D5 20:15</td><td>D5 20:15</td><td>D6 08:15</td><td>0</td><td>720 min</td><td>完成</td></tr><tr><td>job-0017</td><td>TEACH-AIR-01</td><td>通信维修</td><td>D5 14:15</td><td>D5 14:15</td><td>D5 18:15</td><td>0</td><td>240 min</td><td>完成</td></tr><tr><td>job-0024</td><td>TEACH-AIR-01</td><td>通信维修</td><td>D7 14:15</td><td>D7 14:15</td><td>D7 18:15</td><td>0</td><td>240 min</td><td>完成</td></tr></tbody></table></div>
+<p>5 张维修工单全部完成。</p>
+<p class="lead">平均维修时间：</p>
+<div class="formula">MTTR = (480 + 480 + 720 + 240 + 240) / 5 = 432 min</div>
+<p>由于本次每张工单的等待时间均为 0 分钟，因此观测到的平均维修工时与平均建单至开工等待时间之间没有额外差异。</p>
+<p>这里的 MTTR 是本次 5 张已完成工单的观测平均维修时间，不是长期可靠性统计意义上的稳定估计值。</p>
+<h3 id="sec-29">7.5 同一飞机多故障的串行维修</h3>
+<p class="lead">TEACH-AIR-02 在 D5 的同一次任务中先后发生导航和雷达两个实例故障：</p>
+<ul><li>D5 08:26，导航实例 base01-nav-nav-c 发生故障。</li><li>D5 10:30，雷达实例 base01-radar-radar-b 发生故障。</li><li>D5 12:15，飞机带着两个故障实例返场。</li><li>D5 12:15–20:15，先执行导航维修。</li><li>D5 20:15–D6 08:15，接续执行雷达维修。</li></ul>
+<p>这说明模型能够记录同一飞机的多个故障实例，并按照当前维修调度规则串行处理相应维修任务。</p>
+<div class="callout">需要强调：本次没有发生人员或设备容量不足，维修串行处理不能解释为资源池容量竞争造成的等待。</div>
+<h3 id="sec-30">7.6 维修后恢复与再次故障</h3>
+<p class="lead">本次观察到以下现象：</p>
+<p>维修后恢复可用</p>
+<ul><li>TEACH-AIR-06 在 D1 导航维修完成后恢复可用，并继续执行后续波次任务。</li><li>TEACH-AIR-02 在导航和雷达维修全部完成后恢复可用。</li><li>TEACH-AIR-01 在通信维修完成后恢复可用，并继续执行后续任务。</li></ul>
+<p>同一实例再次故障</p>
+<p class="lead">TEACH-AIR-01 的通信实例 base01-comm-comm-a：</p>
+<ul><li>第一次故障：D5 13:01。</li><li>第一次维修完成：D5 18:15。</li><li>第二次故障：D7 10:57。</li><li>第二次维修完成：D7 18:15。</li></ul>
+<p>同一实例维修完成后再次发生故障，说明该实例在维修完成后能够重新进入故障暴露和抽样流程。</p>
+<h3 id="sec-31">7.7 人员与设备使用情况</h3>
+<div class="table-wrap"><table><thead><tr><th>基地</th><th>人员容量</th><th>人员占用（min）</th><th>人员利用率</th><th>设备容量</th><th>设备占用（min）</th><th>设备利用率</th></tr></thead><tbody><tr><td>BASE-01</td><td>7</td><td>2550</td><td>3.614%</td><td>9</td><td>2550</td><td>2.811%</td></tr><tr><td>BASE-02</td><td>5</td><td>1050</td><td>2.083%</td><td>7</td><td>1050</td><td>1.488%</td></tr></tbody></table></div>
+<p class="lead">其中维修占用：</p>
+<ul><li>BASE-01：1680 分钟。</li><li>BASE-02：480 分钟。</li></ul>
+<p>其余占用来自飞行前和飞行后保障作业。</p>
+<p>本次运行中没有出现资源等待。峰值并发低于各基地的人员和设备容量，因此不能据此证明模型已经充分验证了资源竞争和容量阻断机制。</p>
+<h3 id="sec-32">7.8 维修停机与可用率</h3>
+<p>本次按每架飞机的维修工单区间计算维修停机时间，并对同一架飞机的维修区间进行合并，避免重叠时间重复计算。</p>
+<div class="table-wrap"><table><thead><tr><th>飞机</th><th>维修停机时间</th><th>故障次数</th><th>工单数量</th><th>最终状态</th></tr></thead><tbody><tr><td>TEACH-AIR-01</td><td>480 min</td><td>2</td><td>2</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-02</td><td>1200 min</td><td>2</td><td>2</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-03</td><td>0 min</td><td>0</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-04</td><td>0 min</td><td>0</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-05</td><td>0 min</td><td>0</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-06</td><td>480 min</td><td>1</td><td>1</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-07</td><td>0 min</td><td>0</td><td>0</td><td><code>available</code></td></tr><tr><td>TEACH-AIR-08</td><td>0 min</td><td>0</td><td>0</td><td><code>available</code></td></tr><tr><td>合计</td><td>2160 min</td><td>5</td><td>5</td><td></td></tr></tbody></table></div>
+<p class="lead">按维修停机口径计算：</p>
+<div class="formula">可用率 = 1 - 维修停机总时间 /（飞机数量 × 仿真总时间）</div>
+<div class="formula">= 1 - 2160 /（8 × 10080）</div>
+<div class="formula">= 0.973214</div>
+<p>该指标仅反映本次仿真窗口内按工单区间统计的维修停机比例，不包含正常任务执行、待命、保障准备等其他飞机状态时间。因此应称为“按维修停机口径计算的可用率”，不应将其直接等同于完整的任务可用率。</p>
+<h3 id="sec-33">7.9 实验 B 终态</h3>
+<ul><li>5 张维修工单全部完成。</li><li>8 架飞机最终均处于 <code>available</code> 状态。</li><li>所有已发生故障的实例均完成对应维修。</li><li>两个基地的人员和设备在用数量均恢复为 0。</li><li>没有遗留维修任务。</li></ul>
+<h2 id="sec-34">八、实验结果分析</h2>
+<h3 id="sec-35">8.1 正常保障场景分析</h3>
+<p>实验 A 表明，在当前 168 小时仿真窗口和任务强度下，模型能够完成两基地的任务调度与保障作业。</p>
+<p class="lead">主要表现如下：</p>
+<ul><li>任务调度链路正常：10 个计划架次全部起飞、正常返场，任务成功点全部达成。</li><li>存在确定性起飞延误：全部架次延误 15 分钟，原因是 75 分钟飞行前准备时间超过了 60 分钟提前量。</li><li>资源利用率较低：人员和设备利用率均较低，没有观察到资源等待。</li><li>本次未发生故障：累计飞行时间为 40 小时，按照当前实例故障率估算，期望故障次数仅约 0.0145 次，零故障是合理的随机结果。</li><li>飞机使用不均衡：8 架飞机中只有 3 架实际执行任务，其余 5 架没有出动。</li></ul>
+<p>因此，实验 A 主要验证了正常任务调度、飞行前后保障作业、任务完成和资源释放等流程，没有提供故障维修方面的直接证据。</p>
+<h3 id="sec-36">8.2 故障维修场景分析</h3>
+<p>实验 B 通过提高故障率，获得了可观测的故障与维修事件。</p>
+<p class="lead">主要表现如下：</p>
+<ul><li>故障定位正常：5 次故障均记录了基地、飞机、系统组和具体实例。</li><li>组内冗余逻辑得到运行观测：导航、通信和雷达单实例故障后，飞机仍满足当前系统可用条件，能够继续完成任务。</li><li>故障返场和维修建单正常：受影响飞机返场后生成对应维修任务。</li><li>维修工时符合配置：维修持续时间分别为 480、480、720、240 和 240 分钟。</li><li>维修完成后恢复可用：5 张工单全部完成，飞机恢复 <code>available</code> 状态。</li><li>同一飞机的多项维修能够串行处理：TEACH-AIR-02 的导航和雷达维修依次完成。</li><li>维修后再次故障得到观测：TEACH-AIR-01 的同一通信实例在修复后再次发生故障。</li></ul>
+<div class="callout">需要注意，本次 5 次故障只覆盖导航、通信和雷达三个系统。电源、飞控和液压系统虽然已经配置在 Plan 中，但本次没有发生相应故障事件，不能据此认定这三个系统的故障和维修流程已经得到实际运行验证。</div>
+<h3 id="sec-37">8.3 两组实验对照</h3>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>实验 A：主模型</th><th>实验 B：压力模型</th></tr></thead><tbody><tr><td>计划架次</td><td>10</td><td>10</td></tr><tr><td>实际起飞架次</td><td>10</td><td>10</td></tr><tr><td>正常返场架次</td><td>10</td><td>6</td></tr><tr><td>任务成功点</td><td>10</td><td>10</td></tr><tr><td>延误架次</td><td>10</td><td>10</td></tr><tr><td>LRU 故障次数</td><td>0</td><td>5</td></tr><tr><td>维修工单</td><td>0</td><td>5</td></tr><tr><td>完成工单</td><td>0</td><td>5</td></tr><tr><td>MTTR</td><td>—</td><td>432 min</td></tr><tr><td>维修等待</td><td>0 min</td><td>0 min</td></tr><tr><td>维修停机</td><td>0 min</td><td>2160 min</td></tr><tr><td>按维修停机口径计算的可用率</td><td>1.000000</td><td>0.973214</td></tr></tbody></table></div>
+<p>两组实验分别体现了正常保障场景和故障维修场景的运行情况。</p>
+<p>实验 A 使用原始故障率，主要观察正常任务调度；实验 B 使用 ×300 压力测试故障率，主要观察故障发生、冗余、维修和恢复流程。</p>
+<p>两组实验的目的不同，因此不能直接将压力测试模型的故障数量和维修停机数据作为真实可靠性指标。</p>
+<h2 id="sec-38">九、当前模型限制</h2>
+<p>本次实验验证了当前可执行子集的主要流程，但仍有一些需求尚未实现或没有获得实际运行证据。</p>
+<div class="table-wrap"><table><thead><tr><th>功能</th><th>当前状态</th><th>说明</th></tr></thead><tbody><tr><td>168 小时仿真窗口</td><td>已实现</td><td>本次实际运行 10080 分钟</td></tr><tr><td>1032 小时仿真窗口</td><td>尚未实现</td><td>B-1 未实施</td></tr><tr><td>飞行时间故障暴露</td><td>已实现并运行</td><td>本次故障均发生在飞行过程中</td></tr><tr><td>待命时间故障暴露</td><td>尚未实现</td><td>B-2 未实施</td></tr><tr><td>六系统实例配置</td><td>已配置</td><td>六系统均进入 Plan</td></tr><tr><td>六系统全部故障验证</td><td>尚未完成</td><td>本次只观察到导航、通信和雷达故障</td></tr><tr><td>组内冗余</td><td>已有运行观测</td><td>本次观察到单实例失效后继续执行任务</td></tr><tr><td>故障维修流程</td><td>已有运行观测</td><td>5 张工单全部完成</td></tr><tr><td>人员容量竞争</td><td>未充分验证</td><td>本次没有出现资源等待</td></tr><tr><td>设备容量竞争</td><td>未充分验证</td><td>本次没有出现资源等待</td></tr><tr><td>设备类型匹配</td><td>尚未实现</td><td>目前为基地统一设备池</td></tr><tr><td>人员技能匹配</td><td>尚未实现</td><td>目前为统一人员容量</td></tr><tr><td>备件、库存与补给运输</td><td>尚未实现</td><td>没有备件消耗和缺件等待</td></tr><tr><td>DEPOT-01 与三级维修</td><td>尚未实现</td><td>当前只有两个基地资源节点</td></tr><tr><td>完整维修工单状态机</td><td>尚未实现</td><td>目前主要是建单、开工和完成</td></tr><tr><td>预防性维护和寿命管理</td><td>尚未实现</td><td>尚无相应周期维护机制</td></tr><tr><td>高风险任务损伤</td><td>尚未实现</td><td>本次没有损伤事件</td></tr><tr><td>多机协同任务</td><td>尚未实现</td><td>当前任务均为单机任务</td></tr><tr><td>运行中参数变更</td><td>尚未实现</td><td>没有参数时间线机制</td></tr><tr><td>飞机转场和人员调拨</td><td>尚未实现</td><td>当前飞机基地位置固定</td></tr></tbody></table></div>
+<p class="lead">此外，还有以下统计和验证方面的限制：</p>
+<ul><li>本次结果来自浏览器本地执行环境，验证状态为 <code>local-unverified</code>，不是独立验证实验。</li><li>压力测试模型的故障率放大了 300 倍，只用于维修链路验证。</li><li>资源利用率由保存的事件记录和 Plan 步骤需求重新计算，并非运行记录直接提供的完整利用率指标。</li><li>本次没有观察到人员或设备容量被占满，因此不能据此证明所有资源竞争和阻断场景均正确。</li><li>本次可用率仅按维修停机区间计算，不等同于完整任务可用率。</li><li>主模型终态实例暴露分钟合计与飞行时间统计存在 10 分钟差异，需要在后续精确统计中进一步核对。</li></ul>
+<h2 id="sec-39">十、实验数据与可追溯性</h2>
+<h3 id="sec-40">10.1 实验 A 数据目录</h3>
+<p><code>results/expA-main-20261118/</code></p>
+<p class="lead">主要文件：</p>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>内容</th></tr></thead><tbody><tr><td><code>run-record.json</code></td><td>完整运行记录，包含 metrics、事件和 terminalState</td></tr><tr><td>run-metadata.json</td><td>Run ID、种子、指纹和工具链信息</td></tr><tr><td><code>plan-snapshot.json</code></td><td>本次执行的 Plan 快照</td></tr><tr><td><code>browser-artifact.json</code></td><td>浏览器执行产物</td></tr><tr><td>events.json / events.csv</td><td>完整事件日志</td></tr><tr><td>missions.csv</td><td>逐架次任务明细</td></tr><tr><td>aircraft-missions.csv</td><td>按飞机展开的架次明细</td></tr><tr><td><code>failures.csv</code> / failures.json</td><td>故障明细</td></tr><tr><td><code>repairs.csv</code></td><td>维修工单明细</td></tr><tr><td>resources.json</td><td>人员、设备容量及利用率统计</td></tr><tr><td>aircraft.json</td><td>各飞机汇总与终态</td></tr><tr><td><code>summary.json</code></td><td>实验 A 汇总结果</td></tr></tbody></table></div>
+<h3 id="sec-41">10.2 实验 B 数据目录</h3>
+<p><code>results/expB-stress-20261118/</code></p>
+<p class="lead">文件结构与实验 A 基本一致，其中：</p>
+<ul><li><code>run-record.json</code> 保存 231 条事件。</li><li><code>failures.csv</code> 保存 5 条故障记录。</li><li><code>repairs.csv</code> 保存 5 张维修工单记录。</li><li><code>plan-snapshot.json</code> 保存压力测试 Plan 快照。</li></ul>
+<h3 id="sec-42">9.3 汇总与复算文件</h3>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>用途</th></tr></thead><tbody><tr><td><code>results/experiment-20261118-index.json</code></td><td>本次实验元数据索引</td></tr><tr><td><code>results/exp-20261118-comparison.json</code></td><td>两组实验指标对照</td></tr><tr><td><code>build/analyze_experiment.py</code></td><td>根据运行记录和 Plan 快照重算统计结果</td></tr></tbody></table></div>
+<h3 id="sec-43">10.4 主要统计口径</h3>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>计算依据</th></tr></thead><tbody><tr><td>起飞、返场和延误</td><td>mission_launched、mission_returned* 事件及计划时间</td></tr><tr><td>飞行时间</td><td>返场时间减去起飞时间</td></tr><tr><td>故障次数</td><td><code>component_failed</code> 事件</td></tr><tr><td>维修工单</td><td>维修类 operations_phase_created 事件</td></tr><tr><td>维修等待时间</td><td>首个维修步骤开工时间减去建单时间</td></tr><tr><td>维修工时</td><td>维修步骤完成时间与开工时间之差</td></tr><tr><td>人员和设备利用率</td><td>作业占用分钟除以资源容量与仿真总时间的乘积</td></tr><tr><td>维修停机</td><td>每架飞机维修工单区间的并集长度</td></tr><tr><td>按维修停机口径计算的可用率</td><td>1 − 维修停机总时间 /（飞机数量 × 仿真总时间）</td></tr><tr><td>期望故障次数</td><td>各实例故障率合计 × 飞行暴露时间</td></tr></tbody></table></div>
+<p>期望故障次数属于解析估算，不是运行记录中的实测故障数量。</p>
+<h3 id="sec-44">9.5 历史记录保留</h3>
+<p class="lead">本次实验保留了此前的历史运行记录和相关文件，没有覆盖：</p>
+<ul><li><code>results/run-main-seed20250601.record.json</code></li><li><code>results/run-main-seed20250602.record.json</code></li><li><code>results/run-main-seed20250603.record.json</code></li><li><code>results/run-stress-seed20250601.record.json</code></li><li><code>results/summary.json</code></li><li><code>results/plan-c434bed916c3.json</code></li><li><code>results/plan-8b8095bb90cd.json</code></li><li>docs/03-运行记录与结果.md</li></ul>
+<h2 id="sec-45">十一、实验复现</h2>
+<p>以下命令用于说明本次实验的执行流程。实际复现时，应确保 Pi Web 工作区和对应模型产物引用仍然存在。</p>
+<h3 id="sec-46">11.1 主模型</h3>
+<pre class="code-block"><code>project_ir_check
+{ draftRef: &quot;model/business-ir.draft.json&quot; }
+
+project_ir_compile
+{ sealedRef: &lt;check 返回的 sealedRef&gt; }
+
+project_ir_run
+{ browserArtifactRef: &lt;compile 返回的 browserArtifactRef&gt;,
+runOptions: { seed: 20251118 } }
+
+project_ir_result
+{ runId: &quot;run-7730c839-5dc1-4d52-8df4-ac5f584749c0&quot; }</code></pre>
+<h3 id="sec-47">11.2 压力测试模型</h3>
+<pre class="code-block"><code>project_ir_check
+{ draftRef: &quot;model/business-ir.stress.draft.json&quot; }
+
+project_ir_compile
+{ sealedRef: &lt;check 返回的 sealedRef&gt; }
+
+project_ir_run
+{ browserArtifactRef: &lt;compile 返回的 browserArtifactRef&gt;,
+runOptions: { seed: 20251118 } }
+
+project_ir_result
+{ runId: &quot;run-071a0312-52e3-4472-b785-1e91e71841d6&quot; }</code></pre>
+<h3 id="sec-48">11.3 统计结果复算</h3>
+<p class="lead">实验 A：</p>
+<pre class="code-block"><code>python build/analyze_experiment.py --label A \
+--record &quot;&lt;工作区&gt;/.riffoid-ir/runs/run-7730c839-5dc1-4d52-8df4-ac5f584749c0/record.json&quot; \
+--plan results/expA-main-20261118/plan-snapshot.json \
+--out results/expA-main-20261118</code></pre>
+<p class="lead">实验 B：</p>
+<pre class="code-block"><code>python build/analyze_experiment.py --label B \
+--record &quot;&lt;工作区&gt;/.riffoid-ir/runs/run-071a0312-52e3-4472-b785-1e91e71841d6/record.json&quot; \
+--plan results/expB-stress-20261118/plan-snapshot.json \
+--out results/expB-stress-20261118</code></pre>
+<h2 id="sec-49">十二、实验结论</h2>
+<p>本次实验在保持 168 小时仿真时间、主模型故障率、维修时间、人员设备数量和调度规则不变的条件下，完成了正常保障场景与故障维修压力场景两组运行。</p>
+<p>实验 A 中，10 个任务全部完成，8 架飞机最终均恢复或保持可用状态，没有发生设备故障和维修工单。结果表明，当前模型能够执行正常任务调度、飞行前准备、飞行任务、返场和资源释放流程。</p>
+<p>实验 B 中，压力测试模型共发生 5 次设备实例故障，产生 5 张维修工单，全部完成。实验观察到了导航、通信和雷达实例故障、组内冗余继续执行任务、带故障返场、同机多工单串行维修、维修后恢复可用以及同一实例再次故障等现象。</p>
+<p class="lead">因此，本次实验可以支持以下结论：</p>
+<ul><li>当前模型已经具备两基地、多飞机、多任务的可执行建模能力。</li><li>正常任务调度和保障作业流程已获得实际运行记录支持。</li><li>导航、通信和雷达三个系统的部分故障与维修流程获得了压力测试运行证据。</li><li>维修工单能够按配置维修时间完成，维修后飞机和对应实例能够恢复可用。</li><li>当前资源利用率较低，本次实验尚未充分验证人员和设备容量竞争。</li><li>当前模型仍受 168 小时仿真窗口和仅飞行时间故障暴露机制限制。</li></ul>
+<p>综合判断：当前模型已完成可执行子集的功能集成和两组场景运行验证，但尚未完成全部业务需求的端到端验收。</p>
+<p>实验 A 用于说明正常保障场景的运行表现；实验 B 用于说明故障与维修链路的运行表现。两者共同提供了当前模型阶段性能力的运行证据，但不能替代对待命故障暴露、长时间仿真、备件供应、设备类型匹配、人员技能、完整维修状态机等后续功能的验证。</p>
+<p>本报告所列结论均以本次保存的运行记录、Plan 快照和事件日志为依据。实验结果属于浏览器本地执行结果（<code>local-unverified</code>），不应表述为已经通过独立验证的正式实验结果。</p>
+  </main>
+</div>
+
+<footer>
+  综合航空保障仿真实验报告 · Integrated Aviation Support Experiment Report · 2026-11-18
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+  function onScroll() {
+    var best = null;
+    document.querySelectorAll("main h2[id], main h3[id]").forEach(function (h) {
+      if (h.getBoundingClientRect().top <= 100) best = h;
+    });
+    links.forEach(function (a) { a.classList.remove("active"); });
+    if (best && byId[best.id]) byId[best.id].classList.add("active");
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+});
+</script>
+</body>
+</html>
